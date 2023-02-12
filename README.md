@@ -12,7 +12,7 @@ A module for Chrome extensions that functions similarly to Puppeteer. The main p
 
 *   [Install](#install)
 *   [Usage](#usage)
-*   [API Reference](#api-reference)
+*   [Available Methods](#available-methods)
 *   [License](#license)
 *   [Author](#author)
 
@@ -29,8 +29,40 @@ npm i browser-automator
 A minimal example to automate Goolge search:
 
 ```javascript
+import automator from 'browser-automator'
 
+const browser = automator.launch()
+
+const page = await browser.newPage({ tabOptions: { url: 'https://www.google.com' } })
+await page.waitForSelector('input[type="text"]')
+await page.input('input[type="text"]', 'Hello word!')
+await page.click('input[type="submit"]')
 ```
+
+## Available Methods
+- `goto`: Navigate to a target URL and wait for the page to load.
+
+- `reload`: Reload the current page.
+
+- `url`: Get the URL of the current page.
+
+- `close`: Close the current page.
+
+- `bringToFront`: Bring the current page to the front of the window.
+
+- `hideFromFront`: Hide the current page from the front of the window.
+
+- `evaluate`: Execute a JavaScript function in the context of the current page.
+
+- `waitFor`: Wait for a specific condition to be met by periodically checking the result of a JavaScript function.
+
+- `waitForNavigation`: Wait for the URL of the current page to change.
+
+- `waitForSelector`: Wait for a specific DOM element to be present on the page.
+
+- `waitForSelectorMiss`: Wait for a specific DOM element to be absent from the page.
+
+- `waitForXPath`: Wait for a specific XPath expression to match a DOM element on the page.
 
 
 ## License
