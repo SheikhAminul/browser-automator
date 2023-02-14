@@ -5,6 +5,7 @@ browser-automator<br>
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/SheikhAminul/browser-automator/blob/main/LICENSE)
 ================
 
+### Puppeteer alternative for Chrome extensions.
 A module for Chrome extensions that functions similarly to Puppeteer. The main purpose of this module is to provide a convenient and easy-to-use interface for interacting with a web page through Chrome's extension APIs. This TypeScript-based node module provides a comprehensive and convenient way of interacting with a web page through Chrome's browser automation APIs. Whether you need to navigate to a specific URL, execute JavaScript code, or wait for specific conditions to be met, this module has got you covered.
 
 
