@@ -14,6 +14,7 @@ A module for Chrome extensions that functions similarly to Puppeteer. The main p
 *   [Install](#install)
 *   [Usage](#usage)
 *   [Available Methods](#available-methods)
+*   [Contributing](#contributing)
 *   [License](#license)
 *   [Author](#author)
 
@@ -64,6 +65,11 @@ await page.click('input[type="submit"]')
 - `waitForSelectorMiss`: Wait for a specific DOM element to be absent from the page.
 
 - `waitForXPath`: Wait for a specific XPath expression to match a DOM element on the page.
+
+
+## Contributing
+
+You are welcome to contribute! If you are adding a feature or fixing a bug, please contribute to the [GitHub repository](https://github.com/SheikhAminul/browser-automator/).
 
 
 ## License
