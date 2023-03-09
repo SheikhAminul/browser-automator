@@ -29,14 +29,13 @@ export default class Browser {
 				if (onBeforeClose) onBeforeClose()
 				if (!originWindowId) await page.close()
 				else {
-					await chrome.tabs.move(tabId, {
+					if (originWindowId !== (await chrome.tabs.get(tabId)).windowId) await chrome.tabs.move(tabId, {
 						index: -1,
 						windowId: originWindowId
 					})
-					if (activeInOrigin)
-						await chrome.tabs.update(tabId, {
-							active: true
-						})
+					if (activeInOrigin) await chrome.tabs.update(tabId, {
+						active: true
+					})
 				}
 			})
 		)
