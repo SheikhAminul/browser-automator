@@ -1,0 +1,11 @@
+{
+    "editor.wordWrap": "on",
+    "editor.formatOnSave": true,
+    "typescript.validate.enable": true,
+    "files.exclude": {
+        ".vscode": true,
+        "lib": true,
+        "node_modules": true,
+        "package-lock.json": true
+    }
+}

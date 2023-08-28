@@ -76,25 +76,33 @@ export default class Page {
 		const lastUrl = await this.url()
 		return await this.waitFor(async (lastUrl: string) => ((await this.url()) === lastUrl ? false : true), [lastUrl], options as any)
 	}
-	async waitForSelector(selectors: string, options: WaitOptions = {}) {
+	async waitForSelector(selectors: string, options: WaitOptions = {}, index?: number) {
 		return await this.waitFor(
 			async (options: any) => this.evaluate(options),
 			[
 				{
-					func: (selectors: string) => (document.querySelector(selectors) ? true : false),
-					args: [selectors]
+					func: (selectors: string, index?: number) => (
+						(
+							index ? document.querySelectorAll(selectors)[index] : document.querySelector(selectors)
+						) ? true : false
+					),
+					args: [selectors, index]
 				}
 			],
 			options
 		)
 	}
-	async waitForSelectorMiss(selectors: string, options: WaitOptions = {}) {
+	async waitForSelectorMiss(selectors: string, options: WaitOptions = {}, index?: number) {
 		return await this.waitFor(
 			async (options: any) => this.evaluate(options),
 			[
 				{
-					func: (selectors: string) => (document.querySelector(selectors) ? false : true),
-					args: [selectors]
+					func: (selectors: string, index: number) => (
+						(
+							index ? document.querySelectorAll(selectors)[index] : document.querySelector(selectors)
+						) ? false : true
+					),
+					args: [selectors, index]
 				}
 			],
 			options
