@@ -108,13 +108,19 @@ export default class Page {
 			options
 		)
 	}
-	async waitForXPath(expression: any, options: WaitOptions = {}) {
+	async waitForXPath(expression: any, options: WaitOptions = {}, index?: number) {
 		return await this.waitFor(
 			async (options: any) => this.evaluate(options),
 			[
 				{
-					func: (expression: string) => (document.evaluate(expression, document.documentElement, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue ? true : false),
-					args: [expression]
+					func: (expression: string, index: any) => (
+						isNaN(index) ? (
+							document.evaluate(expression, document.documentElement, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue ? true : false
+						) : (
+							document.evaluate(expression, document.documentElement, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null).snapshotItem(index) ? true : false
+						)
+					),
+					args: [expression, index]
 				}
 			],
 			options
