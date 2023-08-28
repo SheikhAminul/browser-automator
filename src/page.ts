@@ -76,14 +76,14 @@ export default class Page {
 		const lastUrl = await this.url()
 		return await this.waitFor(async (lastUrl: string) => ((await this.url()) === lastUrl ? false : true), [lastUrl], options as any)
 	}
-	async waitForSelector(selectors: string, options: WaitOptions = {}, index?: number) {
+	async waitForSelector(selectors: string, options: WaitOptions = {}, index = -1) {
 		return await this.waitFor(
 			async (options: any) => this.evaluate(options),
 			[
 				{
 					func: (selectors: string, index: any) => (
 						(
-							isNaN(index) ? document.querySelector(selectors) : document.querySelectorAll(selectors)[index]
+							index === -1 ? document.querySelector(selectors) : document.querySelectorAll(selectors)[index]
 						) ? true : false
 					),
 					args: [selectors, index]
@@ -92,14 +92,14 @@ export default class Page {
 			options
 		)
 	}
-	async waitForSelectorMiss(selectors: string, options: WaitOptions = {}, index?: number) {
+	async waitForSelectorMiss(selectors: string, options: WaitOptions = {}, index = -1) {
 		return await this.waitFor(
 			async (options: any) => this.evaluate(options),
 			[
 				{
 					func: (selectors: string, index: any) => (
 						(
-							isNaN(index) ? document.querySelector(selectors) : document.querySelectorAll(selectors)[index]
+							index === -1 ? document.querySelector(selectors) : document.querySelectorAll(selectors)[index]
 						) ? false : true
 					),
 					args: [selectors, index]
@@ -108,13 +108,13 @@ export default class Page {
 			options
 		)
 	}
-	async waitForXPath(expression: any, options: WaitOptions = {}, index?: number) {
+	async waitForXPath(expression: any, options: WaitOptions = {}, index = -1) {
 		return await this.waitFor(
 			async (options: any) => this.evaluate(options),
 			[
 				{
 					func: (expression: string, index: any) => (
-						isNaN(index) ? (
+						index === -1 ? (
 							document.evaluate(expression, document.documentElement, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue ? true : false
 						) : (
 							document.evaluate(expression, document.documentElement, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null).snapshotItem(index) ? true : false
@@ -126,11 +126,11 @@ export default class Page {
 			options
 		)
 	}
-	async click(selectors: string, index?: number) {
+	async click(selectors: string, index = -1) {
 		return new Promise(async (onSuccess, onFailed) => {
 			(await this.evaluate({
 				func: (selectors: string, index: any) => {
-					const element = isNaN(index) ? (
+					const element = index === -1 ? (
 						selectors.match(/^(\/|\.\/)/) ? (
 							document.evaluate(selectors, document.documentElement, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue
 						) : (
@@ -153,10 +153,10 @@ export default class Page {
 			})) ? onSuccess(true) : onFailed(false)
 		})
 	}
-	async elementExists(selectors: string, index?: number) {
+	async elementExists(selectors: string, index = -1) {
 		return await this.evaluate({
 			func: (selectors: string, index: number) => {
-				const element = isNaN(index) ? (
+				const element = index === -1 ? (
 					selectors.match(/^(\/|\.\/)/) ? (
 						document.evaluate(selectors, document.documentElement, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue
 					) : (
@@ -182,11 +182,11 @@ export default class Page {
 		document.execCommand('copy')
 		textarea.remove()
 	}
-	async execPasteTo(selectors: string, index?: number) {
+	async execPasteTo(selectors: string, index = -1) {
 		return new Promise(async (onSuccess, onFailed) => {
 			(await this.evaluate({
 				func: (selectors: string, index: number) => {
-					const element = isNaN(index) ? (
+					const element = index === -1 ? (
 						selectors.match(/^(\/|\.\/)/) ? (
 							document.evaluate(selectors, document.documentElement, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue
 						) : (
@@ -211,7 +211,7 @@ export default class Page {
 			})) ? onSuccess(true) : onFailed(false)
 		})
 	}
-	async triggerEvent(selectors: string, type: any, index?: number) {
+	async triggerEvent(selectors: string, type: any, index = -1) {
 		return new Promise(async (onSuccess, onFailed) => {
 			(await this.evaluate({
 				func: (selectors: string, type: any, index: number) => {
@@ -223,7 +223,7 @@ export default class Page {
 							})
 						)
 					}
-					const element = isNaN(index) ? (
+					const element = index === -1 ? (
 						selectors.match(/^(\/|\.\/)/) ? (
 							document.evaluate(selectors, document.documentElement, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue
 						) : (
@@ -246,7 +246,7 @@ export default class Page {
 			})) ? onSuccess(true) : onFailed(false)
 		})
 	}
-	async input(selectors: string, value: any, index?: number) {
+	async input(selectors: string, value: any, index = -1) {
 		return new Promise(async (onSuccess, onFailed) => {
 			(await this.evaluate({
 				func: (selectors: string, value: any, index: number) => {
@@ -269,7 +269,7 @@ export default class Page {
 						triggerEvent(element, 'change')
 						triggerEvent(element, 'blur')
 					}
-					const element = isNaN(index) ? (
+					const element = index === -1 ? (
 						selectors.match(/^(\/|\.\/)/) ? (
 							document.evaluate(selectors, document.documentElement, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue
 						) : (
