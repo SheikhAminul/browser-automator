@@ -1,5 +1,3 @@
-import { doDelay, setValue, triggerEvent } from './library'
-
 declare global {
 	interface Window {
 		elementCatcher: any
@@ -8,7 +6,41 @@ declare global {
 }
 
 const selfAutomator = (global = true) => {
+	async function doDelay(milliseconds: number) {
+		return new Promise(onDone => setTimeout(onDone, milliseconds))
+	}
+
+	function setValue(element: { tagName: string; value: any; innerHTML: any }, value: any) {
+		if (element.tagName.match(/INPUT|TEXTAREA|SELECT/i)) element.value = value
+		else element.innerHTML = value
+		triggerEvent(element, 'focus')
+		triggerEvent(element, 'keydown')
+		triggerEvent(element, 'keypress')
+		triggerEvent(element, 'keyup')
+		triggerEvent(element, 'input')
+		triggerEvent(element, 'change')
+		triggerEvent(element, 'blur')
+	}
+
+	function triggerEvent(element: any, type: string) {
+		element.dispatchEvent(
+			new Event(type, {
+				bubbles: true,
+				cancelable: true
+			})
+		)
+	}
+
 	class Page {
+		static getElementByXPath(expression: string, contextNode = document.documentElement) {
+			return document.evaluate(expression, contextNode, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue
+		}
+		static getElementsByXPath = (expression: string, contextNode = document.documentElement) => {
+			let elements = []
+			let xpathQuery = document.evaluate(expression, contextNode, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null)
+			for (let index = 0; index < xpathQuery.snapshotLength; index++) elements.push(xpathQuery.snapshotItem(index))
+			return elements
+		}
 		static goto(url: string) {
 			location.href = url
 			return true
@@ -43,10 +75,10 @@ const selfAutomator = (global = true) => {
 			return await this.waitFor((selectors: string) => (document.querySelector(selectors) ? true : false), [selectors], options)
 		}
 		static async waitForXPath(expression: any, options = {}) {
-			return await this.waitFor((expression: string) => (document.evaluate(expression, document.documentElement, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue ? true : false), [expression], options)
+			return await this.waitFor((expression: string) => (this.getElementByXPath(expression) ? true : false), [expression], options)
 		}
 		static click(selectors: string) {
-			const element = selectors.match(/^(\/|\.\/)/) ? document.evaluate(selectors, document.documentElement, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue : (document.querySelector(selectors) as any)
+			const element = selectors.match(/^(\/|\.\/)/) ? this.getElementByXPath(selectors) : (document.querySelector(selectors) as any)
 			if (element) {
 				element.scrollIntoView({ block: 'center', behavior: 'smooth' })
 				element.click()
@@ -62,7 +94,7 @@ const selfAutomator = (global = true) => {
 			textarea.remove()
 		}
 		static execPasteTo(selectors: string) {
-			const element = selectors.match(/^(\/|\.\/)/) ? document.evaluate(selectors, document.documentElement, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue : (document.querySelector(selectors) as any)
+			const element = selectors.match(/^(\/|\.\/)/) ? this.getElementByXPath(selectors) : (document.querySelector(selectors) as any)
 			if (element) {
 				element.scrollIntoView({ block: 'center', behavior: 'smooth' })
 				element.focus()
@@ -72,7 +104,7 @@ const selfAutomator = (global = true) => {
 			} else return false
 		}
 		static triggerEvent(selectors: string, type: any) {
-			const element = selectors.match(/^(\/|\.\/)/) ? document.evaluate(selectors, document.documentElement, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue : (document.querySelector(selectors) as any)
+			const element = selectors.match(/^(\/|\.\/)/) ? this.getElementByXPath(selectors) : (document.querySelector(selectors) as any)
 			if (element) {
 				element.scrollIntoView({ block: 'center', behavior: 'smooth' })
 				triggerEvent(element, type)
@@ -80,7 +112,7 @@ const selfAutomator = (global = true) => {
 			} else return false
 		}
 		static input(selectors: string, value: any) {
-			const element = selectors.match(/^(\/|\.\/)/) ? document.evaluate(selectors, document.documentElement, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue : (document.querySelector(selectors) as any)
+			const element = selectors.match(/^(\/|\.\/)/) ? this.getElementByXPath(selectors) : (document.querySelector(selectors) as any)
 			if (element) {
 				element.scrollIntoView({ block: 'center', behavior: 'smooth' })
 				setValue(element, value)
@@ -88,7 +120,7 @@ const selfAutomator = (global = true) => {
 			} else return false
 		}
 		static uploadFiles(files: FileList, selectors: string, caughtElementIndex: number) {
-			const element = selectors ? (selectors.match(/^(\/|\.\/)/) ? document.evaluate(selectors, document.documentElement, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue : document.querySelector(selectors)) : window.elementCatcher.elements[caughtElementIndex]
+			const element = selectors ? (selectors.match(/^(\/|\.\/)/) ? this.getElementByXPath(selectors) : document.querySelector(selectors)) : window.elementCatcher.elements[caughtElementIndex]
 			if (element) {
 				element.scrollIntoView({ block: 'center', behavior: 'smooth' })
 				element.files = files
