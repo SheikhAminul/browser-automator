@@ -71,6 +71,10 @@ const selfAutomator = (global = true) => {
 				valueReturned ? onSuccess(valueReturned) : onFailed(valueReturned)
 			})
 		}
+		static async waitForNavigation(options = {}) {
+			const lastUrl = this.url()
+			return await this.waitFor(async (lastUrl: string) => (this.url() === lastUrl ? false : true), [lastUrl], options as any)
+		}
 		static async waitForSelector(selectors: string, options = {}) {
 			return await this.waitFor((selectors: string) => (document.querySelector(selectors) ? true : false), [selectors], options)
 		}
@@ -180,10 +184,10 @@ const selfAutomator = (global = true) => {
 		static tryLimit: number = 150
 		static delay: number = 250
 	}
-	if (global) (window as any).Page = Page
+	if (global) (window as any).Self = Page
 	else return Page
 }
 
-const Page = selfAutomator(false)
-export default Page
+const Self = selfAutomator(false)
+export default Self
 export { selfAutomator }
