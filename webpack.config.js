@@ -3,7 +3,11 @@ const path = require('path')
 module.exports = {
 	target: 'web',
 	entry: {
-		'index': './src/index.ts'
+		'index': './src/index.ts',
+		'library': './src/library.ts',
+		'page-self': './src/page-self.ts',
+		'browser': './src/browser.ts',
+		'page': './src/page.ts'
 	},
 	output: {
 		filename: '[name].js',
