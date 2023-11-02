@@ -34,11 +34,18 @@ A minimal example to automate Goolge search:
 import automator from 'browser-automator'
 
 const browser = automator.launch()
+const page = await browser.newPage()
 
-const page = await browser.newPage({ tabOptions: { url: 'https://www.google.com' } })
-await page.waitForSelector('input[type="text"]')
-await page.input('input[type="text"]', 'Hello word!')
+await page.goto('https://www.google.com')
+await page.waitForSelector('textarea[type="search"]')
+await page.input('textarea[type="search"]', 'Who owns Google?')
 await page.click('input[type="submit"]')
+
+await page.waitForSelector('[class*="header"]')
+const result = await page.evaluate((selector) => {
+	return document.querySelector(selector)?.innerText?.trim()
+}, ['div[class*="header"]'])
+console.log(result)
 ```
 
 ## API Reference
