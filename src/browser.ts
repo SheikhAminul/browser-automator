@@ -85,8 +85,8 @@ export default class Browser {
 	 * Creates a new Page instance and associates it with the browser.
 	 * @param tabId - The ID of the tab to use for creating the Page instance. If not supplied a tab will be created.
 	 * @param windowId - The ID of the window to open the page in. If not supplied a window will be created.
-	 * @param originWindowId - The ID of the tab's origin window (if any).
-	 * @param activeInOrigin - Whether the page should be active in the origin window.
+	 * @param originWindowId - The ID of the tab's origin window. If supplied the tab will be moved in that window when closing the browser-automator instance instead of closing the tab.
+	 * @param activeInOrigin - Whether the page/tab should be active in the origin window when moved to the origin window.
 	 * @param windowOptions - Options for creating the window.
 	 * @param tabOptions - Options for creating or updating the tab.
 	 * @returns A Promise that resolves with the new Page instance.

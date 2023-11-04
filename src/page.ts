@@ -30,6 +30,16 @@ export default class Page {
 	windowId!: number
 
 	/**
+	 * @type {number} - The ID of the tab's origin window. If supplied the tab will be moved in that window when closing the browser-automator instance instead of closing the tab.
+	 */
+	originWindowId!: number
+
+	/**
+	 * @type {number} - Whether the page/tab should be active in the origin window when moved to the origin window.
+	 */
+	activeInOrigin!: number
+
+	/**
 	 * @type {Function} - Callback function to be executed before closing the page.
 	 */
 	onBeforeClose?: Function
