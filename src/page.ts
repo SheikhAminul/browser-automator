@@ -802,11 +802,9 @@ export default class Page {
 			try {
 				await this.evaluate({
 					func: () => {
-						if (!window.manualClickPreventer) {
-							window.manualClickPreventer = document.createElement('div')
-							window.manualClickPreventer.style = 'width: 100%; height: 100%; position: fixed; top: 0; cursor: not-allowed; z-index: 12500; left: 0;'
-							window.manualClickPreventer.addEventListener('contextmenu', (event: { preventDefault: () => any }) => event.preventDefault())
-							document.body.appendChild(window.manualClickPreventer)
+						if (window.manualClickPreventer) {
+							window.manualClickPreventer.remove()
+							delete window.manualClickPreventer
 						}
 					}
 				})
@@ -819,9 +817,11 @@ export default class Page {
 			try {
 				await this.evaluate({
 					func: () => {
-						if (window.manualClickPreventer) {
-							window.manualClickPreventer.remove()
-							delete window.manualClickPreventer
+						if (!window.manualClickPreventer) {
+							window.manualClickPreventer = document.createElement('div')
+							window.manualClickPreventer.style = 'width: 100%; height: 100%; position: fixed; top: 0; cursor: not-allowed; z-index: 12500; left: 0;'
+							window.manualClickPreventer.addEventListener('contextmenu', (event: { preventDefault: () => any }) => event.preventDefault())
+							document.body.appendChild(window.manualClickPreventer)
 						}
 					}
 				})
