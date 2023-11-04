@@ -512,7 +512,7 @@ export default class Page {
 	 * @param {number} index - The index of the element to interact with.
 	 * @returns {Promise<void>}
 	 */
-	async triggerEvent(selectors: string, type: any, index: number = -1): Promise<void> {
+	async triggerEvent(selectors: string, type: 'click' | 'input' | 'submit' | 'keydown' | 'keyup' | 'keypress' | 'change' | 'mouseover' | 'mouseout' | 'focus' | 'blur' | 'load' | string, index: number = -1): Promise<void> {
 		try {
 			if (!await this.evaluate({
 				func: (selectors: string, type: any, index: number, { scrollToElementBeforeAction, scrollIntoViewOptions }: Pick<PageConfigurations, 'scrollIntoViewOptions' | 'scrollToElementBeforeAction'>) => {
@@ -606,12 +606,12 @@ export default class Page {
 	/**
 	 * Uploads files to an input element specified by the CSS selector or XPath expression.
 	 *
-	 * @param {(File | { name: string, blob: Blob, dataUrl?: string, blobUrl?: string })[]} files - An array of files to upload, where each file can be a File object or an object with name, blob, dataUrl, and blobUrl properties.
 	 * @param {string} selectors - The CSS selector or XPath expression of the input element.
+	 * @param {(File | { name: string, blob: Blob, dataUrl?: string, blobUrl?: string })[]} files - An array of files to upload, where each file can be a File object or an object with name, blob, dataUrl, and blobUrl properties.
 	 * @param {number} caughtElementIndex - The index of the element to interact with (default is -1).
 	 * @returns {Promise<void>}
 	 */
-	async uploadFiles(files: (File | { name: string, blob: Blob, dataUrl?: string, blobUrl?: string } | any)[], selectors: string, caughtElementIndex: number): Promise<void> {
+	async uploadFiles(selectors: string, files: (File | { name: string, blob: Blob, dataUrl?: string, blobUrl?: string } | any)[], caughtElementIndex: number): Promise<void> {
 		try {
 			const executionWorld = caughtElementIndex ? 'MAIN' : 'ISOLATED'
 

@@ -254,22 +254,44 @@ const selfAutomator = (global = true) => {
 		 * @param {number} index - The index of the element to interact with.
 		 * @returns {void}
 		 */
-		static click(selectors: string, index: number = -1): void {
+		static click(selectors: string, index: number): void
+
+		/**
+		 * Clicks on the element specified by the CSS selector or XPath expression.
+		 *
+		 * @param {Element} element - Represents a DOM element in the document.
+		 * @returns {void}
+		 */
+		static click(element: Element): void
+
+		static click(): void {
 			try {
+				let selectors: string = '', element: any, index: number = -1
+				if (typeof arguments[0] === 'string') {
+					[selectors, index] = arguments
+					if (!index) index = -1
+				} else {
+					[element] = arguments
+				}
+
 				const { scrollToElementBeforeAction, scrollIntoViewOptions }: Pick<PageConfigurations, 'scrollIntoViewOptions' | 'scrollToElementBeforeAction'> = this.configurations
-				const element = index === -1 ? (
-					selectors.match(/^(\/|\.\/)/) ? (
-						document.evaluate(selectors, document.documentElement, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue
+
+				if (!element) {
+					element = index === -1 ? (
+						selectors.match(/^(\/|\.\/)/) ? (
+							document.evaluate(selectors, document.documentElement, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue
+						) : (
+							document.querySelector(selectors) as any
+						)
 					) : (
-						document.querySelector(selectors) as any
+						selectors.match(/^(\/|\.\/)/) ? (
+							document.evaluate(selectors, document.documentElement, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null).snapshotItem(index)
+						) : (
+							document.querySelectorAll(selectors)[index] as any
+						)
 					)
-				) : (
-					selectors.match(/^(\/|\.\/)/) ? (
-						document.evaluate(selectors, document.documentElement, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null).snapshotItem(index)
-					) : (
-						document.querySelectorAll(selectors)[index] as any
-					)
-				)
+				}
+
 				if (element) {
 					scrollToElementBeforeAction && element.scrollIntoView(scrollIntoViewOptions)
 					element.click()
@@ -298,22 +320,43 @@ const selfAutomator = (global = true) => {
 		 * @param {number} index - The index of the element to interact with (default is -1).
 		 * @returns {void}
 		 */
-		static execPasteTo(selectors: string, index: number = -1): void {
+		static execPasteTo(selectors: string, index: number): void
+
+		/**
+		 * Pastes text from the clipboard to an element specified by the CSS selector or XPath expression.
+		 *
+		 * @param {Element} element - Represents a DOM element in the document.
+		 * @returns {void}
+		 */
+		static execPasteTo(element: Element): void
+
+		static execPasteTo(): void {
 			try {
+				let selectors: string = '', element: any, index: number = -1
+				if (typeof arguments[0] === 'string') {
+					[selectors, index] = arguments
+					if (!index) index = -1
+				} else {
+					[element] = arguments
+				}
+
 				const { scrollToElementBeforeAction, scrollIntoViewOptions }: Pick<PageConfigurations, 'scrollIntoViewOptions' | 'scrollToElementBeforeAction'> = this.configurations
-				const element = index === -1 ? (
-					selectors.match(/^(\/|\.\/)/) ? (
-						document.evaluate(selectors, document.documentElement, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue
+				if (!element) {
+					element = index === -1 ? (
+						selectors.match(/^(\/|\.\/)/) ? (
+							document.evaluate(selectors, document.documentElement, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue
+						) : (
+							document.querySelector(selectors) as any
+						)
 					) : (
-						document.querySelector(selectors) as any
+						selectors.match(/^(\/|\.\/)/) ? (
+							document.evaluate(selectors, document.documentElement, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null).snapshotItem(index)
+						) : (
+							document.querySelectorAll(selectors)[index] as any
+						)
 					)
-				) : (
-					selectors.match(/^(\/|\.\/)/) ? (
-						document.evaluate(selectors, document.documentElement, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null).snapshotItem(index)
-					) : (
-						document.querySelectorAll(selectors)[index] as any
-					)
-				)
+				}
+
 				if (element) {
 					scrollToElementBeforeAction && element.scrollIntoView(scrollIntoViewOptions)
 					element.focus()
@@ -331,22 +374,45 @@ const selfAutomator = (global = true) => {
 		 * @param {number} index - The index of the element to interact with.
 		 * @returns {void}
 		 */
-		static triggerEvent(selectors: string, type: any, index: number = -1): void {
+		static triggerEvent(selectors: string, type: 'click' | 'input' | 'submit' | 'keydown' | 'keyup' | 'keypress' | 'change' | 'mouseover' | 'mouseout' | 'focus' | 'blur' | 'load' | string, index: number): void
+
+		/**
+		 * Triggers an event on the element specified by the CSS selector or XPath expression.
+		 *
+		 * @param {Element} element - Represents a DOM element in the document.
+		 * @param {string} type - The type of event to trigger.
+		 * @returns {void}
+		 */
+		static triggerEvent(element: Element, type: 'click' | 'input' | 'submit' | 'keydown' | 'keyup' | 'keypress' | 'change' | 'mouseover' | 'mouseout' | 'focus' | 'blur' | 'load' | string): void
+
+		static triggerEvent(): void {
 			try {
+				let selectors: string = '', element: any, type: string, index: number = -1
+				if (typeof arguments[0] === 'string') {
+					[selectors, type, index] = arguments
+					if (!index) index = -1
+				} else {
+					[element, type] = arguments
+				}
+
 				const { scrollToElementBeforeAction, scrollIntoViewOptions }: Pick<PageConfigurations, 'scrollIntoViewOptions' | 'scrollToElementBeforeAction'> = this.configurations
-				const element = index === -1 ? (
-					selectors.match(/^(\/|\.\/)/) ? (
-						document.evaluate(selectors, document.documentElement, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue
+
+				if (!element) {
+					element = index === -1 ? (
+						selectors.match(/^(\/|\.\/)/) ? (
+							document.evaluate(selectors, document.documentElement, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue
+						) : (
+							document.querySelector(selectors) as any
+						)
 					) : (
-						document.querySelector(selectors) as any
+						selectors.match(/^(\/|\.\/)/) ? (
+							document.evaluate(selectors, document.documentElement, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null).snapshotItem(index)
+						) : (
+							document.querySelectorAll(selectors)[index] as any
+						)
 					)
-				) : (
-					selectors.match(/^(\/|\.\/)/) ? (
-						document.evaluate(selectors, document.documentElement, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null).snapshotItem(index)
-					) : (
-						document.querySelectorAll(selectors)[index] as any
-					)
-				)
+				}
+
 				if (element) {
 					scrollToElementBeforeAction && element.scrollIntoView(scrollIntoViewOptions)
 					triggerEvent(element, type)
@@ -362,22 +428,45 @@ const selfAutomator = (global = true) => {
 		 * @param {number} index - The index of the element to interact with.
 		 * @returns {Promise<void>}
 		 */
-		static input(selectors: string, value: any, index: number = -1): void {
+		static input(selectors: string, value: any, index: number): void
+
+		/**
+		 * Inputs a value into the element specified by the CSS selector or XPath expression.
+		 *
+		 * @param {Element} element - Represents a DOM element in the document.
+		 * @param {any} value - The value to input.
+		 * @returns {void}
+		 */
+		static input(element: Element, value: any): void
+
+		static input(): void {
 			try {
+				let selectors: string = '', element: any, value: any, index: number = -1
+				if (typeof arguments[0] === 'string') {
+					[selectors, value, index] = arguments
+					if (!index) index = -1
+				} else {
+					[element, value] = arguments
+				}
+
 				const { scrollToElementBeforeAction, scrollIntoViewOptions }: Pick<PageConfigurations, 'scrollIntoViewOptions' | 'scrollToElementBeforeAction'> = this.configurations
-				const element = index === -1 ? (
-					selectors.match(/^(\/|\.\/)/) ? (
-						document.evaluate(selectors, document.documentElement, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue
+
+				if (!element) {
+					element = index === -1 ? (
+						selectors.match(/^(\/|\.\/)/) ? (
+							document.evaluate(selectors, document.documentElement, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue
+						) : (
+							document.querySelector(selectors) as any
+						)
 					) : (
-						document.querySelector(selectors) as any
+						selectors.match(/^(\/|\.\/)/) ? (
+							document.evaluate(selectors, document.documentElement, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null).snapshotItem(index)
+						) : (
+							document.querySelectorAll(selectors)[index] as any
+						)
 					)
-				) : (
-					selectors.match(/^(\/|\.\/)/) ? (
-						document.evaluate(selectors, document.documentElement, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null).snapshotItem(index)
-					) : (
-						document.querySelectorAll(selectors)[index] as any
-					)
-				)
+				}
+
 				if (element) {
 					scrollToElementBeforeAction && element.scrollIntoView(scrollIntoViewOptions)
 					setValue(element, value)
@@ -388,26 +477,50 @@ const selfAutomator = (global = true) => {
 		/**
 		 * Uploads files to an input element specified by the CSS selector or XPath expression.
 		 *
-		 * @param {(File)[]} files - An array of files to upload, where each file can be a File object.
 		 * @param {string} selectors - The CSS selector or XPath expression of the input element.
+		 * @param {(File)[]} files - An array of files to upload, where each file can be a File object.
 		 * @param {number} index - The index of the element to interact with.
+		 * @returns {void}
 		 */
-		static uploadFiles(files: File[], selectors: string, index: number = -1) {
+		static uploadFiles(selectors: string, files: File[], index: number): void
+
+		/**
+		 * Uploads files to an input element specified by the CSS selector or XPath expression.
+		 *
+		 * @param {Element} element - Represents a DOM element in the document.
+		 * @param {(File)[]} files - An array of files to upload, where each file can be a File object.
+		 * @returns {void}
+		 */
+		static uploadFiles(element: Element, files: File[]): void
+
+		static uploadFiles(): void {
 			try {
+				let selectors: string = '', element: any, files: File[], index: number = -1
+				if (typeof arguments[0] === 'string') {
+					[selectors, files, index] = arguments
+					if (!index) index = -1
+				} else {
+					[element, files] = arguments
+				}
+
 				const { scrollToElementBeforeAction, scrollIntoViewOptions }: Pick<PageConfigurations, 'scrollIntoViewOptions' | 'scrollToElementBeforeAction'> = this.configurations
-				const element = index === -1 ? (
-					selectors.match(/^(\/|\.\/)/) ? (
-						document.evaluate(selectors, document.documentElement, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue
+
+				if (!element) {
+					element = index === -1 ? (
+						selectors.match(/^(\/|\.\/)/) ? (
+							document.evaluate(selectors, document.documentElement, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue
+						) : (
+							document.querySelector(selectors) as any
+						)
 					) : (
-						document.querySelector(selectors) as any
+						selectors.match(/^(\/|\.\/)/) ? (
+							document.evaluate(selectors, document.documentElement, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null).snapshotItem(index)
+						) : (
+							document.querySelectorAll(selectors)[index] as any
+						)
 					)
-				) : (
-					selectors.match(/^(\/|\.\/)/) ? (
-						document.evaluate(selectors, document.documentElement, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null).snapshotItem(index)
-					) : (
-						document.querySelectorAll(selectors)[index] as any
-					)
-				)
+				}
+
 				if (element) {
 					scrollToElementBeforeAction && element.scrollIntoView(scrollIntoViewOptions)
 					element.scrollIntoView({ block: 'center', behavior: 'smooth' })
