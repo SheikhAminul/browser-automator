@@ -8,6 +8,13 @@ declare global {
 	}
 }
 
+interface PageConfigurations {
+	tryLimit: number
+	delay: number
+	scrollToElementBeforeAction: boolean
+	scrollIntoViewOptions: ScrollIntoViewOptions
+}
+
 /**
  * Represents a Page instance for interacting with Chrome browser pages.
  */
@@ -23,19 +30,38 @@ export default class Page {
 	windowId!: number
 
 	/**
-	 * @type {number} - The maximum number of attempts for waiting operations.
-	 */
-	tryLimit: number = 50
-
-	/**
-	 * @type {number} - The delay between attempts in milliseconds.
-	 */
-	delay: number = 750
-
-	/**
 	 * @type {Function} - Callback function to be executed before closing the page.
 	 */
 	onBeforeClose?: Function
+
+	/**
+	 * @type {Object} - Represents the configurations for the Page instance.
+	 */
+	configurations: PageConfigurations = {
+		tryLimit: 50,
+		delay: 750,
+		scrollToElementBeforeAction: true,
+		scrollIntoViewOptions: {
+			behavior: 'smooth',
+			block: 'center'
+		}
+	}
+
+	/**
+	 * Configures the Page instance with the specified configurations.
+	 * 
+	 * @param {Object} configurations - An object represents configurations for the Page instance.
+	 * @param {number} [configurations.tryLimit] - The maximum number of attempts for waiting operations.
+	 * @param {number} [configurations.delay] - The delay between attempts in milliseconds.
+	 * @param {boolean} [configurations.scrollToElementBeforeAction] - Scroll to the element before an action (`click`, `execPasteTo`, `triggerEvent`, `input`, `uploadFiles`). 
+	 * @param {Object} [configurations.scrollIntoViewOptions] - Options for the `scrollIntoView` method to scroll to elements.
+	 */
+	configure(configurations: Partial<PageConfigurations>): void {
+		this.configurations = {
+			...this.configurations,
+			...configurations
+		}
+	}
 
 	/**
 	 * Creates a new Page instance for a specific Chrome tab with the given tabId and windowId.
@@ -72,12 +98,12 @@ export default class Page {
 			let tab
 			if (waitUntil === 'load') {
 				do {
-					await doDelay(this.delay)
+					await doDelay(this.configurations.delay)
 					tab = await chrome.tabs.get(this.tabId)
 				} while (tab.pendingUrl === 'about:blank' || tab.url === 'about:blank')
 			} else if ((waitUntil = 'domcontentloaded')) {
 				do {
-					await doDelay(this.delay)
+					await doDelay(this.configurations.delay)
 					tab = await chrome.tabs.get(this.tabId)
 				} while (tab.pendingUrl === 'about:blank' || tab.url === 'about:blank' || tab.status !== 'complete')
 			}
@@ -246,8 +272,8 @@ export default class Page {
 	async waitFor(func: Function, args: any[], options: { tryLimit?: number; delay?: number } = {}): Promise<any> {
 		try {
 			let value,
-				tryLimit = options.tryLimit || this.tryLimit,
-				delay = options.delay || this.delay
+				tryLimit = options.tryLimit || this.configurations.tryLimit,
+				delay = options.delay || this.configurations.delay
 			while (!(value = await func(...args)) && tryLimit) {
 				tryLimit--
 				await doDelay(delay)
@@ -402,7 +428,7 @@ export default class Page {
 	async click(selectors: string, index: number = -1): Promise<void> {
 		try {
 			if (!await this.evaluate({
-				func: (selectors: string, index: any) => {
+				func: (selectors: string, index: any, { scrollToElementBeforeAction, scrollIntoViewOptions }: Pick<PageConfigurations, 'scrollIntoViewOptions' | 'scrollToElementBeforeAction'>) => {
 					const element = index === -1 ? (
 						selectors.match(/^(\/|\.\/)/) ? (
 							document.evaluate(selectors, document.documentElement, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue
@@ -417,12 +443,12 @@ export default class Page {
 						)
 					)
 					if (element) {
-						element.scrollIntoView({ block: 'center', behavior: 'smooth' })
+						scrollToElementBeforeAction && element.scrollIntoView(scrollIntoViewOptions)
 						element.click()
 						return true
 					} else return false
 				},
-				args: [selectors, index]
+				args: [selectors, index, this.configurations]
 			})) throw new Error(`No element(s) found for the CSS Selectors or XPath (${selectors}${index === -1 ? '' : `, ${index}`}).`)
 		} catch (error) { throw error }
 	}
@@ -451,7 +477,7 @@ export default class Page {
 	async execPasteTo(selectors: string, index: number = -1): Promise<void> {
 		try {
 			if (!await this.evaluate({
-				func: (selectors: string, index: number) => {
+				func: (selectors: string, index: number, { scrollToElementBeforeAction, scrollIntoViewOptions }: Pick<PageConfigurations, 'scrollIntoViewOptions' | 'scrollToElementBeforeAction'>) => {
 					const element = index === -1 ? (
 						selectors.match(/^(\/|\.\/)/) ? (
 							document.evaluate(selectors, document.documentElement, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue
@@ -466,14 +492,14 @@ export default class Page {
 						)
 					)
 					if (element) {
-						element.scrollIntoView({ block: 'center', behavior: 'smooth' })
+						scrollToElementBeforeAction && element.scrollIntoView(scrollIntoViewOptions)
 						element.focus()
 						if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') element.select()
 						document.execCommand('paste')
 						return true
 					} else return false
 				},
-				args: [selectors, index]
+				args: [selectors, index, this.configurations]
 			})) throw new Error(`No element(s) found for the CSS Selectors or XPath (${selectors}${index === -1 ? '' : `, ${index}`}).`)
 		} catch (error) { throw error }
 	}
@@ -489,7 +515,7 @@ export default class Page {
 	async triggerEvent(selectors: string, type: any, index: number = -1): Promise<void> {
 		try {
 			if (!await this.evaluate({
-				func: (selectors: string, type: any, index: number) => {
+				func: (selectors: string, type: any, index: number, { scrollToElementBeforeAction, scrollIntoViewOptions }: Pick<PageConfigurations, 'scrollIntoViewOptions' | 'scrollToElementBeforeAction'>) => {
 					function triggerEvent(element: any, type: string) {
 						element.dispatchEvent(
 							new Event(type, {
@@ -512,12 +538,12 @@ export default class Page {
 						)
 					)
 					if (element) {
-						element.scrollIntoView({ block: 'center', behavior: 'smooth' })
+						scrollToElementBeforeAction && element.scrollIntoView(scrollIntoViewOptions)
 						triggerEvent(element, type)
 						return true
 					} else return false
 				},
-				args: [selectors, type, index]
+				args: [selectors, type, index, this.configurations]
 			})) throw new Error(`No element(s) found for the CSS Selectors or XPath (${selectors}${index === -1 ? '' : `, ${index}`}).`)
 		} catch (error) { throw error }
 	}
@@ -533,7 +559,7 @@ export default class Page {
 	async input(selectors: string, value: any, index: number = -1): Promise<void> {
 		try {
 			if (!await this.evaluate({
-				func: (selectors: string, value: any, index: number) => {
+				func: (selectors: string, value: any, index: number, { scrollToElementBeforeAction, scrollIntoViewOptions }: Pick<PageConfigurations, 'scrollIntoViewOptions' | 'scrollToElementBeforeAction'>) => {
 					function triggerEvent(element: any, type: string) {
 						element.dispatchEvent(
 							new Event(type, {
@@ -567,12 +593,12 @@ export default class Page {
 						)
 					)
 					if (element) {
-						element.scrollIntoView({ block: 'center', behavior: 'smooth' })
+						scrollToElementBeforeAction && element.scrollIntoView(scrollIntoViewOptions)
 						setValue(element, value)
 						return true
 					} else return false
 				},
-				args: [selectors, value, index]
+				args: [selectors, value, index, this.configurations]
 			})) throw new Error(`No element(s) found for the CSS Selectors or XPath (${selectors}${index === -1 ? '' : `, ${index}`}).`)
 		} catch (error) { throw error }
 	}
@@ -629,7 +655,7 @@ export default class Page {
 			// Upload the file
 			await this.evaluate({
 				world: executionWorld,
-				func: async (filesIndex: number, selectors: string, caughtElementIndex: number) => {
+				func: async (filesIndex: number, selectors: string, caughtElementIndex: number, { scrollToElementBeforeAction, scrollIntoViewOptions }: Pick<PageConfigurations, 'scrollIntoViewOptions' | 'scrollToElementBeforeAction'>) => {
 					function filesToFileList(files: FileList) {
 						const dataTransferer = new DataTransfer()
 						for (const file of files) dataTransferer.items.add(file)
@@ -667,7 +693,7 @@ export default class Page {
 					// Upload file
 					const element = selectors ? (selectors.match(/^(\/|\.\/)/) ? document.evaluate(selectors, document.documentElement, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue : document.querySelector(selectors)) : window.elementCatcher.elements[caughtElementIndex]
 					if (element) {
-						element.scrollIntoView({ block: 'center', behavior: 'smooth' })
+						scrollToElementBeforeAction && element.scrollIntoView(scrollIntoViewOptions)
 						element.files = filesToFileList((await Promise.all(window.transmittedFiles[filesIndex].map(async ({ blobUrl, dataUrl, name }: any) => (blobUrl ? blobToFile((await getBlob(blobUrl)) as any, name) : dataUrlToFile(dataUrl, name))))) as any)
 						triggerEvent(element, 'input')
 						triggerEvent(element, 'change')
@@ -709,7 +735,7 @@ export default class Page {
 		 *
 		 * @param {any} tagName - The tag name of the elements to catch.
 		 */
-		catch: async function (tagName: any) {
+		catch: async function (tagName: any): Promise<void> {
 			try {
 				await this.evaluate({
 					world: 'MAIN',
@@ -725,8 +751,7 @@ export default class Page {
 								if (element.tagName === window.elementCatcher.tagName) window.elementCatcher.elements.push(element)
 								return element
 							}
-							return true
-						} else return false
+						}
 					},
 					args: [tagName]
 				})
@@ -736,7 +761,7 @@ export default class Page {
 		/**
 		 * Terminates element catching and restores the original createElement function of JS.
 		 */
-		terminate: async function () {
+		terminate: async function (): Promise<void> {
 			try {
 				await this.evaluate({
 					world: 'MAIN',
@@ -745,8 +770,7 @@ export default class Page {
 							document.createElement = window.elementCatcher.originalFunc
 							delete window.elementCatcher.originalFunc
 							delete window.elementCatcher.tagName
-							return true
-						} else return false
+						}
 					}
 				})
 			} catch (error) { throw error }
@@ -755,7 +779,7 @@ export default class Page {
 		/**
 		 * Clears the element catcher, restoring the original createElement function.
 		 */
-		clear: async function () {
+		clear: async function (): Promise<void> {
 			try {
 				await this.evaluate({
 					world: 'MAIN',
@@ -763,8 +787,7 @@ export default class Page {
 						if (window.elementCatcher) {
 							if (window.elementCatcher.originalFunc) document.createElement = window.elementCatcher.originalFunc
 							delete window.elementCatcher
-							return true
-						} else return false
+						}
 					}
 				})
 			} catch (error) { throw error }
@@ -775,13 +798,16 @@ export default class Page {
 		/**
 		 * Enables manual clicks on the page.
 		 */
-		enable: async function () {
+		enable: async function (): Promise<void> {
 			try {
 				await this.evaluate({
 					func: () => {
-						if (!window.manualClickPreventer) return false
-						window.manualClickPreventer.remove()
-						delete window.manualClickPreventer
+						if (!window.manualClickPreventer) {
+							window.manualClickPreventer = document.createElement('div')
+							window.manualClickPreventer.style = 'width: 100%; height: 100%; position: fixed; top: 0; cursor: not-allowed; z-index: 12500; left: 0;'
+							window.manualClickPreventer.addEventListener('contextmenu', (event: { preventDefault: () => any }) => event.preventDefault())
+							document.body.appendChild(window.manualClickPreventer)
+						}
 					}
 				})
 			} catch (error) { throw error }
@@ -789,15 +815,14 @@ export default class Page {
 		/**
 		 * Disables manual clicks on the page.
 		 */
-		disable: async function () {
+		disable: async function (): Promise<void> {
 			try {
 				await this.evaluate({
 					func: () => {
-						if (window.manualClickPreventer) return false
-						window.manualClickPreventer = document.createElement('div')
-						window.manualClickPreventer.style = 'width: 100%; height: 100%; position: fixed; top: 0; cursor: not-allowed; z-index: 12500; left: 0;'
-						window.manualClickPreventer.addEventListener('contextmenu', (event: { preventDefault: () => any }) => event.preventDefault())
-						document.body.appendChild(window.manualClickPreventer)
+						if (window.manualClickPreventer) {
+							window.manualClickPreventer.remove()
+							delete window.manualClickPreventer
+						}
 					}
 				})
 			} catch (error) { throw error }

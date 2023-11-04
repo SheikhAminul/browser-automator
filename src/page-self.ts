@@ -5,9 +5,25 @@ declare global {
 	}
 }
 
+interface PageConfigurations {
+	tryLimit: number
+	delay: number
+	scrollToElementBeforeAction: boolean
+	scrollIntoViewOptions: ScrollIntoViewOptions
+}
+
 const selfAutomator = (global = true) => {
 	async function doDelay(milliseconds: number) {
 		return new Promise(onDone => setTimeout(onDone, milliseconds))
+	}
+
+	function triggerEvent(element: any, type: string) {
+		element.dispatchEvent(
+			new Event(type, {
+				bubbles: true,
+				cancelable: true
+			})
+		)
 	}
 
 	function setValue(element: { tagName: string; value: any; innerHTML: any }, value: any) {
@@ -22,74 +38,251 @@ const selfAutomator = (global = true) => {
 		triggerEvent(element, 'blur')
 	}
 
-	function triggerEvent(element: any, type: string) {
-		element.dispatchEvent(
-			new Event(type, {
-				bubbles: true,
-				cancelable: true
-			})
-		)
-	}
-
 	class Page {
-		static getElementByXPath(expression: string, contextNode = document.documentElement) {
-			return document.evaluate(expression, contextNode, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue
+		/**
+		 * @type {Object} - Represents the configurations for the Page instance.
+		 */
+		static configurations: PageConfigurations = {
+			tryLimit: 50,
+			delay: 750,
+			scrollToElementBeforeAction: true,
+			scrollIntoViewOptions: {
+				behavior: 'smooth',
+				block: 'center'
+			}
 		}
-		static getElementsByXPath = (expression: string, contextNode = document.documentElement) => {
-			let elements = []
-			let xpathQuery = document.evaluate(expression, contextNode, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null)
-			for (let index = 0; index < xpathQuery.snapshotLength; index++) elements.push(xpathQuery.snapshotItem(index))
-			return elements
+
+		/**
+		 * Configures the Page instance with the specified configurations.
+		 * 
+		 * @param {Object} configurations - An object represents configurations for the Page instance.
+		 * @param {number} [configurations.tryLimit] - The maximum number of attempts for waiting operations.
+		 * @param {number} [configurations.delay] - The delay between attempts in milliseconds.
+		 * @param {boolean} [configurations.scrollToElementBeforeAction] - Scroll to the element before an action (`click`, `execPasteTo`, `triggerEvent`, `input`, `uploadFiles`). 
+		 * @param {Object} [configurations.scrollIntoViewOptions] - Options for the `scrollIntoView` method to scroll to elements.
+		 */
+		static configure(configurations: Partial<PageConfigurations>): void {
+			this.configurations = {
+				...this.configurations,
+				...configurations
+			}
 		}
-		static goto(url: string) {
-			location.href = url
-			return true
+
+		/**
+		 * Navigate to the specified URL.
+		 * 
+		 * @param {string} url - The URL to navigate to.
+		 */
+		static goto(url: string): void {
+			try {
+				location.href = url
+			} catch (error) { throw error }
 		}
-		static reload() {
-			location.reload()
-			return true
+
+		/**
+		 * Reloads the current page.
+		 */
+		static reload(): void {
+			try {
+				location.reload()
+			} catch (error) { throw error }
 		}
-		static url() {
-			return location.href
+
+		/**
+		 * Get the current URL of the page.
+		 * 
+		 * @returns The current URL as a string.
+		 */
+		static url(): string {
+			try {
+				return location.href
+			} catch (error) { throw error }
 		}
-		static close() {
-			close()
-			return true
+
+		/**
+		 * Close the current page.
+		 */
+		static close(): void {
+			try {
+				close()
+			} catch (error) { throw error }
 		}
-		static evaluate({ func }: { func: Function }) {
-			return func()
-		}
-		static async waitFor(func: Function, args: any, options = {} as { tryLimit?: number; delay?: number }) {
-			return new Promise(async (onSuccess, onFailed) => {
-				let valueReturned,
-					tryLimit = options.tryLimit || this.tryLimit,
-					delay = options.delay || this.delay
-				while (!(valueReturned = await func(...args)) && tryLimit) {
+
+		/**
+		 * Waits for a function to return a truthy value.
+		 * 
+		 * @param {Function} func - The function representing the condition to wait for.
+		 * @param {any[]} args - Arguments to pass to the function.
+		 * @param {Object} [options] - Optional wait options.
+		 * @param {number} [options.tryLimit] - The maximum number of attempts to wait for the condition (default is this.tryLimit).
+		 * @param {number} [options.delay] - The delay in milliseconds between attempts (default is this.delay).
+		 * @returns {Promise<any>} - The result of the evaluated condition.
+		*/
+		static async waitFor(func: Function, args: any[], options: { tryLimit?: number; delay?: number } = {}): Promise<any> {
+			try {
+				let value,
+					tryLimit = options.tryLimit || this.configurations.tryLimit,
+					delay = options.delay || this.configurations.delay
+				while (!(value = await func(...args)) && tryLimit) {
 					tryLimit--
 					await doDelay(delay)
 				}
-				valueReturned ? onSuccess(valueReturned) : onFailed(valueReturned)
-			})
+				if (value) return value
+				else throw new Error('Waiting timed out...')
+			} catch (error) { throw error }
 		}
-		static async waitForNavigation(options = {}) {
-			const lastUrl = this.url()
-			return await this.waitFor(async (lastUrl: string) => (this.url() === lastUrl ? false : true), [lastUrl], options as any)
+
+		/**
+		 * Waits for the page to navigate to a new URL.
+		 * 
+		 * @param {Object} [options] - An object specifying waiting options.
+		 * @param {number} [options.tryLimit] - The maximum number of attempts to wait for navigation (default is 50).
+		 * @param {number} [options.delay] - The delay between each attempt in milliseconds (default is 750).
+		 * @returns {Promise<void>}
+		 */
+		static async waitForNavigation(options: { tryLimit?: number; delay?: number } = {}): Promise<void> {
+			try {
+				const lastUrl = this.url()
+				await this.waitFor(
+					async (lastUrl: string) => ((this.url()) === lastUrl ? false : true),
+					[lastUrl],
+					options
+				)
+			} catch (error) { throw error }
 		}
-		static async waitForSelector(selectors: string, options = {}) {
-			return await this.waitFor((selectors: string) => (document.querySelector(selectors) ? true : false), [selectors], options)
+
+		/**
+		 * Waits for an element matching the given CSS selector to become available.
+		 *
+		 * @param {string} selectors - The CSS selector to wait for.
+		 * @param {Object} [options] - Optional wait options.
+		 * @param {number} [options.tryLimit] - The maximum number of attempts to find the element (default is 1000).
+		 * @param {number} [options.delay] - The delay between attempts in milliseconds (default is 750).
+		 * @param {number} [index = -1] - The index of the element if multiple elements match the selector.
+		 * @returns {Promise<void>}
+		 */
+		static async waitForSelector(selectors: string, options: { tryLimit?: number; delay?: number } = {}, index: number = -1): Promise<void> {
+			try {
+				await this.waitFor(
+					(selectors: string, index: any) => (
+						(index === -1 ? document.querySelector(selectors) : document.querySelectorAll(selectors)[index]) ? true : false
+					),
+					[selectors, index],
+					options
+				)
+			} catch (error) { throw error }
 		}
-		static async waitForXPath(expression: any, options = {}) {
-			return await this.waitFor((expression: string) => (this.getElementByXPath(expression) ? true : false), [expression], options)
+
+		/**
+		 * Waits for an element matching the given selector to disappear from the page.
+		 * 
+		 * @param {string} selectors - The CSS selector or XPath expression to check for element absence.
+		 * @param {Object} [options] - Optional options for waiting.
+		 * @param {number} [options.tryLimit] - The maximum number of attempts (default is 1000).
+		 * @param {number} [options.delay] - The delay in milliseconds between attempts (default is 750ms).
+		 * @param {number} [index = -1] - The index of the element if there are multiple matches.
+		 * @returns {Promise<void>}
+		 */
+		static async waitForSelectorMiss(selectors: string, options: { tryLimit?: number; delay?: number } = {}, index: number = -1): Promise<void> {
+			try {
+				await this.waitFor(
+					(selectors: string, index: any) => (
+						(index === -1 ? document.querySelector(selectors) : document.querySelectorAll(selectors)[index]) ? false : true
+					),
+					[selectors, index],
+					options
+				)
+			} catch (error) { throw error }
 		}
-		static click(selectors: string) {
-			const element = selectors.match(/^(\/|\.\/)/) ? this.getElementByXPath(selectors) : (document.querySelector(selectors) as any)
-			if (element) {
-				element.scrollIntoView({ block: 'center', behavior: 'smooth' })
-				element.click()
-				return true
-			} else return false
+
+		/**
+		 * Waits for an element matching the given XPath expression to appear in the page.
+		 * 
+		 * @param {any} expression - The XPath expression to wait for.
+		 * @param {{ tryLimit?: number; delay?: number }} [options] - Optional waiting options.
+		 * @param {number} [options.tryLimit] - The maximum number of attempts to find the element (default is 1000).
+		 * @param {number} [options.delay] - The delay in milliseconds between attempts (default is 750ms).
+		 * @param {number} [index] - The index of the element to interact with.
+		 * @returns {Promise<void>}
+		 */
+		static async waitForXPath(expression: any, options: { tryLimit?: number; delay?: number } = {}, index: number = -1): Promise<void> {
+			try {
+				await this.waitFor(
+					(expression: string, index: any) => (
+						index === -1 ? (
+							document.evaluate(expression, document.documentElement, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue ? true : false
+						) : (
+							document.evaluate(expression, document.documentElement, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null).snapshotItem(index) ? true : false
+						)
+					),
+					[expression, index],
+					options
+				)
+			} catch (error) { throw error }
 		}
-		static execCopy(text: string) {
+
+		/**
+		 * Checks if an element specified by the CSS selector or XPath expression exists on the page.
+		 *
+		 * @param {string} selectors - The CSS selector or XPath expression to check for existence.
+		 * @param {number} index - The index of the element to check.
+		 * @returns {boolean}
+		 */
+		static elementExists(selectors: string, index: number = -1): boolean {
+			try {
+				const element = index === -1 ? (
+					selectors.match(/^(\/|\.\/)/) ? (
+						document.evaluate(selectors, document.documentElement, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue
+					) : (
+						document.querySelector(selectors) as any
+					)
+				) : (
+					selectors.match(/^(\/|\.\/)/) ? (
+						document.evaluate(selectors, document.documentElement, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null).snapshotItem(index)
+					) : (
+						document.querySelectorAll(selectors)[index] as any
+					)
+				)
+				return element ? true : false
+			} catch (error) { throw error }
+		}
+
+		/**
+		 * Clicks on the element specified by the CSS selector or XPath expression.
+		 *
+		 * @param {string} selectors - The CSS selector or XPath expression to click on.
+		 * @param {number} index - The index of the element to interact with.
+		 * @returns {void}
+		 */
+		static click(selectors: string, index: number = -1): void {
+			try {
+				const { scrollToElementBeforeAction, scrollIntoViewOptions }: Pick<PageConfigurations, 'scrollIntoViewOptions' | 'scrollToElementBeforeAction'> = this.configurations
+				const element = index === -1 ? (
+					selectors.match(/^(\/|\.\/)/) ? (
+						document.evaluate(selectors, document.documentElement, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue
+					) : (
+						document.querySelector(selectors) as any
+					)
+				) : (
+					selectors.match(/^(\/|\.\/)/) ? (
+						document.evaluate(selectors, document.documentElement, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null).snapshotItem(index)
+					) : (
+						document.querySelectorAll(selectors)[index] as any
+					)
+				)
+				if (element) {
+					scrollToElementBeforeAction && element.scrollIntoView(scrollIntoViewOptions)
+					element.click()
+				} else throw new Error(`No element(s) found for the CSS Selectors or XPath (${selectors}${index === -1 ? '' : `, ${index}`}).`)
+			} catch (error) { throw error }
+		}
+
+		/**
+		 * Copies text to the clipboard.
+		 *
+		 * @param {string} text - The text to copy to the clipboard.
+		 */
+		static execCopy(text: string): void {
 			const textarea = document.createElement('textarea')
 			textarea.innerHTML = text
 			document.body.appendChild(textarea)
@@ -97,92 +290,234 @@ const selfAutomator = (global = true) => {
 			document.execCommand('copy')
 			textarea.remove()
 		}
-		static execPasteTo(selectors: string) {
-			const element = selectors.match(/^(\/|\.\/)/) ? this.getElementByXPath(selectors) : (document.querySelector(selectors) as any)
-			if (element) {
-				element.scrollIntoView({ block: 'center', behavior: 'smooth' })
-				element.focus()
-				if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') element.select()
-				document.execCommand('paste')
-				return true
-			} else return false
+
+		/**
+		 * Pastes text from the clipboard to an element specified by the CSS selector or XPath expression.
+		 *
+		 * @param {string} selectors - The CSS selector or XPath expression of the target element.
+		 * @param {number} index - The index of the element to interact with (default is -1).
+		 * @returns {void}
+		 */
+		static execPasteTo(selectors: string, index: number = -1): void {
+			try {
+				const { scrollToElementBeforeAction, scrollIntoViewOptions }: Pick<PageConfigurations, 'scrollIntoViewOptions' | 'scrollToElementBeforeAction'> = this.configurations
+				const element = index === -1 ? (
+					selectors.match(/^(\/|\.\/)/) ? (
+						document.evaluate(selectors, document.documentElement, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue
+					) : (
+						document.querySelector(selectors) as any
+					)
+				) : (
+					selectors.match(/^(\/|\.\/)/) ? (
+						document.evaluate(selectors, document.documentElement, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null).snapshotItem(index)
+					) : (
+						document.querySelectorAll(selectors)[index] as any
+					)
+				)
+				if (element) {
+					scrollToElementBeforeAction && element.scrollIntoView(scrollIntoViewOptions)
+					element.focus()
+					if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') element.select()
+					document.execCommand('paste')
+				} else throw new Error(`No element(s) found for the CSS Selectors or XPath (${selectors}${index === -1 ? '' : `, ${index}`}).`)
+			} catch (error) { throw error }
 		}
-		static triggerEvent(selectors: string, type: any) {
-			const element = selectors.match(/^(\/|\.\/)/) ? this.getElementByXPath(selectors) : (document.querySelector(selectors) as any)
-			if (element) {
-				element.scrollIntoView({ block: 'center', behavior: 'smooth' })
-				triggerEvent(element, type)
-				return true
-			} else return false
+
+		/**
+		 * Triggers an event on the element specified by the CSS selector or XPath expression.
+		 *
+		 * @param {string} selectors - The CSS selector or XPath expression of the target element.
+		 * @param {string} type - The type of event to trigger.
+		 * @param {number} index - The index of the element to interact with.
+		 * @returns {void}
+		 */
+		static triggerEvent(selectors: string, type: any, index: number = -1): void {
+			try {
+				const { scrollToElementBeforeAction, scrollIntoViewOptions }: Pick<PageConfigurations, 'scrollIntoViewOptions' | 'scrollToElementBeforeAction'> = this.configurations
+				const element = index === -1 ? (
+					selectors.match(/^(\/|\.\/)/) ? (
+						document.evaluate(selectors, document.documentElement, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue
+					) : (
+						document.querySelector(selectors) as any
+					)
+				) : (
+					selectors.match(/^(\/|\.\/)/) ? (
+						document.evaluate(selectors, document.documentElement, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null).snapshotItem(index)
+					) : (
+						document.querySelectorAll(selectors)[index] as any
+					)
+				)
+				if (element) {
+					scrollToElementBeforeAction && element.scrollIntoView(scrollIntoViewOptions)
+					triggerEvent(element, type)
+				} else throw new Error(`No element(s) found for the CSS Selectors or XPath (${selectors}${index === -1 ? '' : `, ${index}`}).`)
+			} catch (error) { throw error }
 		}
-		static input(selectors: string, value: any) {
-			const element = selectors.match(/^(\/|\.\/)/) ? this.getElementByXPath(selectors) : (document.querySelector(selectors) as any)
-			if (element) {
-				element.scrollIntoView({ block: 'center', behavior: 'smooth' })
-				setValue(element, value)
-				return true
-			} else return false
+
+		/**
+		 * Inputs a value into the element specified by the CSS selector or XPath expression.
+		 *
+		 * @param {string} selectors - The CSS selector or XPath expression of the target element.
+		 * @param {any} value - The value to input.
+		 * @param {number} index - The index of the element to interact with.
+		 * @returns {Promise<void>}
+		 */
+		static input(selectors: string, value: any, index: number = -1): void {
+			try {
+				const { scrollToElementBeforeAction, scrollIntoViewOptions }: Pick<PageConfigurations, 'scrollIntoViewOptions' | 'scrollToElementBeforeAction'> = this.configurations
+				const element = index === -1 ? (
+					selectors.match(/^(\/|\.\/)/) ? (
+						document.evaluate(selectors, document.documentElement, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue
+					) : (
+						document.querySelector(selectors) as any
+					)
+				) : (
+					selectors.match(/^(\/|\.\/)/) ? (
+						document.evaluate(selectors, document.documentElement, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null).snapshotItem(index)
+					) : (
+						document.querySelectorAll(selectors)[index] as any
+					)
+				)
+				if (element) {
+					scrollToElementBeforeAction && element.scrollIntoView(scrollIntoViewOptions)
+					setValue(element, value)
+				} else throw new Error(`No element(s) found for the CSS Selectors or XPath (${selectors}${index === -1 ? '' : `, ${index}`}).`)
+			} catch (error) { throw error }
 		}
-		static uploadFiles(files: FileList, selectors: string, caughtElementIndex: number) {
-			const element = selectors ? (selectors.match(/^(\/|\.\/)/) ? this.getElementByXPath(selectors) : document.querySelector(selectors)) : window.elementCatcher.elements[caughtElementIndex]
-			if (element) {
-				element.scrollIntoView({ block: 'center', behavior: 'smooth' })
-				element.files = files
-				triggerEvent(element, 'input')
-				triggerEvent(element, 'change')
-				return true
-			} else return false
+
+		/**
+		 * Uploads files to an input element specified by the CSS selector or XPath expression.
+		 *
+		 * @param {(File)[]} files - An array of files to upload, where each file can be a File object.
+		 * @param {string} selectors - The CSS selector or XPath expression of the input element.
+		 * @param {number} index - The index of the element to interact with.
+		 */
+		static uploadFiles(files: File[], selectors: string, index: number = -1) {
+			try {
+				const { scrollToElementBeforeAction, scrollIntoViewOptions }: Pick<PageConfigurations, 'scrollIntoViewOptions' | 'scrollToElementBeforeAction'> = this.configurations
+				const element = index === -1 ? (
+					selectors.match(/^(\/|\.\/)/) ? (
+						document.evaluate(selectors, document.documentElement, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue
+					) : (
+						document.querySelector(selectors) as any
+					)
+				) : (
+					selectors.match(/^(\/|\.\/)/) ? (
+						document.evaluate(selectors, document.documentElement, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null).snapshotItem(index)
+					) : (
+						document.querySelectorAll(selectors)[index] as any
+					)
+				)
+				if (element) {
+					scrollToElementBeforeAction && element.scrollIntoView(scrollIntoViewOptions)
+					element.scrollIntoView({ block: 'center', behavior: 'smooth' })
+					element.files = files
+					triggerEvent(element, 'input')
+					triggerEvent(element, 'change')
+				} else throw new Error(`No element(s) found for the CSS Selectors or XPath (${selectors}${index === -1 ? '' : `, ${index}`}).`)
+			} catch (error) { throw error }
 		}
+
+		/**
+		 * Get a single DOM element using an XPath expression within a given context node.
+		 *
+		 * @param {string} expression - The XPath expression to select the desired element.
+		 * @param {Node} [contextNode=document.documentElement] - The optional context node within which to search for the element.
+		 * @returns {Node | null} The first matching DOM element found, or null if none is found.
+		 */
+		static getElementByXPath(expression: string, contextNode: Node = document.documentElement): Node {
+			return document.evaluate(expression, contextNode, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue as any
+		}
+
+		/**
+		 * Get an array of DOM elements matching an XPath expression within a given context node.
+		 *
+		 * @param {string} expression - The XPath expression to select the desired elements.
+		 * @param {Node} [contextNode=document.documentElement] - The optional context node within which to search for the elements.
+		 * @returns {Node[]} An array of DOM elements that match the XPath expression.
+		 */
+		static getElementsByXPath = (expression: string, contextNode: Node = document.documentElement): Node[] => {
+			let elements = []
+			let xpathQuery = document.evaluate(expression, contextNode, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null)
+			for (let index = 0; index < xpathQuery.snapshotLength; index++) elements.push(xpathQuery.snapshotItem(index))
+			return elements as any
+		}
+
 		static elementCatcher = {
-			catch: async function (tagName: any) {
-				if (!window.elementCatcher) {
-					window.elementCatcher = {
-						originalFunc: document.createElement,
-						elements: [],
-						tagName: tagName.toUpperCase()
+			/**
+			 * Enables element catching for elements with the specified tag name. Some websites create dynamic elements and hide elements from the page to prevent automated tasks such as automated file upload, etc. It logs those elements to interact with them.
+			 *
+			 * @param {any} tagName - The tag name of the elements to catch.
+			 */
+			catch: function (tagName: any): void {
+				try {
+					if (!window.elementCatcher) {
+						window.elementCatcher = {
+							originalFunc: document.createElement,
+							elements: [],
+							tagName: tagName.toUpperCase()
+						}
+						document.createElement = function () {
+							const element = window.elementCatcher.originalFunc.apply(this, arguments)
+							if (element.tagName === window.elementCatcher.tagName) window.elementCatcher.elements.push(element)
+							return element
+						}
 					}
-					document.createElement = function () {
-						const element = window.elementCatcher.originalFunc.apply(this, arguments)
-						if (element.tagName === window.elementCatcher.tagName) window.elementCatcher.elements.push(element)
-						return element
+				} catch (error) { throw error }
+			},
+
+			/**
+			 * Terminates element catching and restores the original createElement function of JS.
+			 */
+			terminate: function (): void {
+				try {
+					if (window.elementCatcher) {
+						document.createElement = window.elementCatcher.originalFunc
+						delete window.elementCatcher.originalFunc
+						delete window.elementCatcher.tagName
 					}
-					return true
-				} else return false
+				} catch (error) { throw error }
 			},
-			terminate: async function () {
-				if (window.elementCatcher) {
-					document.createElement = window.elementCatcher.originalFunc
-					delete window.elementCatcher.originalFunc
-					delete window.elementCatcher.tagName
-					return true
-				} else return false
-			},
-			clear: async function () {
-				if (window.elementCatcher) {
-					if (window.elementCatcher.originalFunc) document.createElement = window.elementCatcher.originalFunc
-					delete window.elementCatcher
-					return true
-				} else return false
+
+			/**
+			 * Clears the element catcher, restoring the original createElement function.
+			 */
+			clear: function (): void {
+				try {
+					if (window.elementCatcher) {
+						if (window.elementCatcher.originalFunc) document.createElement = window.elementCatcher.originalFunc
+						delete window.elementCatcher
+					}
+				} catch (error) { throw error }
 			}
-		}
+		} as any
+
 		static manualClick = {
-			enable: async function () {
-				if (!window.manualClickPreventer) return false
-				window.manualClickPreventer.remove()
-				delete window.manualClickPreventer
-				return true
+			/**
+			 * Enables manual clicks on the page.
+			 */
+			enable: function (): void {
+				try {
+					if (!window.manualClickPreventer) {
+						window.manualClickPreventer = document.createElement('div')
+						window.manualClickPreventer.style = 'width: 100%; height: 100%; position: fixed; top: 0; cursor: not-allowed; z-index: 12500; left: 0;'
+						window.manualClickPreventer.addEventListener('contextmenu', (event: { preventDefault: () => any }) => event.preventDefault())
+						document.body.appendChild(window.manualClickPreventer)
+					}
+				} catch (error) { throw error }
 			},
-			disable: async function () {
-				if (window.manualClickPreventer) return false
-				window.manualClickPreventer = document.createElement('div')
-				window.manualClickPreventer.style = 'width: 100%; height: 100%; position: fixed; top: 0; cursor: not-allowed; z-index: 12500; left: 0;'
-				window.manualClickPreventer.addEventListener('contextmenu', (event: { preventDefault: () => any }) => event.preventDefault())
-				document.body.appendChild(window.manualClickPreventer)
-				return true
+			/**
+			 * Disables manual clicks on the page.
+			 */
+			disable: function (): void {
+				try {
+					if (window.manualClickPreventer) {
+						window.manualClickPreventer.remove()
+						delete window.manualClickPreventer
+					}
+				} catch (error) { throw error }
 			}
-		}
-		static tryLimit: number = 150
-		static delay: number = 250
+		} as any
 	}
 	if (global) (window as any).Self = Page
 	else return Page
