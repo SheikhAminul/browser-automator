@@ -603,7 +603,7 @@ const selfAutomator = (global = true) => {
 					}
 				} catch (error) { throw error }
 			}
-		} as any
+		}
 
 		static manualClick = {
 			/**
@@ -630,7 +630,7 @@ const selfAutomator = (global = true) => {
 					}
 				} catch (error) { throw error }
 			}
-		} as any
+		}
 	}
 	if (global) (window as any).Self = Page
 	else return Page
