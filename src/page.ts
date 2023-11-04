@@ -79,10 +79,14 @@ export default class Page {
 	 * @param {{ tabId: number; windowId: number }} options - An object containing tabId and windowId properties.
 	 * @param {number} options.tabId - The unique identifier of the Chrome tab associated with this Page instance.
 	 * @param {number} options.windowId - The unique identifier of the Chrome window containing the tab.
+	 * @param {number} options.originWindowId - The ID of the tab's origin window. If supplied the tab will be moved in that window when closing the browser-automator instance instead of closing the tab.
+	 * @param {number} options.activeInOrigin - Whether the page/tab should be active in the origin window when moved to the origin window.
 	 */
-	constructor({ tabId, windowId }: { tabId: number; windowId: number }) {
+	constructor({ tabId, windowId, originWindowId, activeInOrigin }: { tabId: number; windowId: number, originWindowId: number, activeInOrigin: number }) {
 		this.tabId = tabId
 		this.windowId = windowId
+		this.originWindowId = originWindowId
+		this.activeInOrigin = activeInOrigin
 
 		this.elementCatcher.catch = this.elementCatcher.catch.bind(this)
 		this.elementCatcher.terminate = this.elementCatcher.terminate.bind(this)
