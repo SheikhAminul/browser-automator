@@ -254,7 +254,7 @@ const selfAutomator = (global = true) => {
 		 * @param {number} index - The index of the element to interact with.
 		 * @returns {void}
 		 */
-		static click(selectors: string, index: number): void
+		static click(selectors: string, index?: number): void
 
 		/**
 		 * Clicks on the element specified by the CSS selector or XPath expression.
@@ -320,7 +320,7 @@ const selfAutomator = (global = true) => {
 		 * @param {number} index - The index of the element to interact with (default is -1).
 		 * @returns {void}
 		 */
-		static execPasteTo(selectors: string, index: number): void
+		static execPasteTo(selectors: string, index?: number): void
 
 		/**
 		 * Pastes text from the clipboard to an element specified by the CSS selector or XPath expression.
@@ -374,7 +374,7 @@ const selfAutomator = (global = true) => {
 		 * @param {number} index - The index of the element to interact with.
 		 * @returns {void}
 		 */
-		static triggerEvent(selectors: string, type: 'click' | 'input' | 'submit' | 'keydown' | 'keyup' | 'keypress' | 'change' | 'mouseover' | 'mouseout' | 'focus' | 'blur' | 'load' | string, index: number): void
+		static triggerEvent(selectors: string, type: 'click' | 'input' | 'submit' | 'keydown' | 'keyup' | 'keypress' | 'change' | 'mouseover' | 'mouseout' | 'focus' | 'blur' | 'load' | string, index?: number): void
 
 		/**
 		 * Triggers an event on the element specified by the CSS selector or XPath expression.
@@ -428,7 +428,7 @@ const selfAutomator = (global = true) => {
 		 * @param {number} index - The index of the element to interact with.
 		 * @returns {Promise<void>}
 		 */
-		static input(selectors: string, value: any, index: number): void
+		static input(selectors: string, value: any, index?: number): void
 
 		/**
 		 * Inputs a value into the element specified by the CSS selector or XPath expression.
@@ -482,7 +482,7 @@ const selfAutomator = (global = true) => {
 		 * @param {number} index - The index of the element to interact with.
 		 * @returns {void}
 		 */
-		static uploadFiles(selectors: string, files: File[], index: number): void
+		static uploadFiles(selectors: string, files: File[], index?: number): void
 
 		/**
 		 * Uploads files to an input element specified by the CSS selector or XPath expression.
