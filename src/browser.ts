@@ -35,6 +35,7 @@ export default class Browser {
 	beforeUnloadListener = (event: Event) => {
 		event.preventDefault()
 		this.close()
+		return false
 	}
 
 	/**
