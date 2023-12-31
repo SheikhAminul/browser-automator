@@ -181,29 +181,6 @@ export default class Page {
 	}
 
 	/**
-	 * Evaluates JavaScript code on the page.
-	 * 
-	 * @param {Object} options - An object specifying evaluation options.
-	 * @param {Function} [options.func] - The function to evaluate.
-	 * @param {string[]} [options.files] - Or an array of script file paths to evaluate.
-	 * @param {any[]} [options.args] - Arguments to pass to the evaluated function.
-	 * @param {'ISOLATED' | 'MAIN'} [options.world] - The world context for evaluation (default is 'MAIN').
-	 * @param {boolean} [options.allFrames] - Indicates whether to evaluate in all frames (default is false).
-	 * @param {number[]} [options.frameIds] - An array of frame identifiers where the evaluation should take place.
-	 * @param {string[]} [options.documentIds] - An array of document identifiers for the frames to evaluate in.
-	 * @returns {Promise<any>} - The result of the evaluation.
-	 */
-	async evaluate(options: {
-		func?: Function
-		files?: string[]
-		args?: any[]
-		world?: 'ISOLATED' | 'MAIN'
-		allFrames?: boolean
-		frameIds?: number[]
-		documentIds?: string[]
-	}): Promise<any>
-
-	/**
 	 * Evaluates a function on the page.
 	 * 
 	 * @param {Function} func - The function to evaluate.
@@ -215,18 +192,21 @@ export default class Page {
 	 * @param {string[]} [options.documentIds] - An array of document identifiers for the frames to evaluate in.
 	 * @returns {Promise<any>} - The result of the evaluation.
 	 */
-	async evaluate(func: Function, args?: any[], options?: {
-		world?: 'ISOLATED' | 'MAIN'
-		allFrames?: boolean
-		frameIds?: number[]
-		documentIds?: string[]
-	}): Promise<any>
+	async evaluate<T extends (...args: any[]) => any>(
+		func: T,
+		args: Parameters<T>,
+		options?: {
+			world?: 'ISOLATED' | 'MAIN'
+			allFrames?: boolean
+			frameIds?: number[]
+			documentIds?: string[]
+		}
+	): Promise<ReturnType<T>>
 
 	/**
-	 * Evaluates JS files on the page.
+	 * Evaluates a function on the page.
 	 * 
-	 * @param {string[]} files - An array of script file paths to evaluate.
-	 * @param {any[]} [args] - Arguments to pass to the function.
+	 * @param {Function} func - The function to evaluate.
 	 * @param {Object} [options] - Optional evaluation options.
 	 * @param {'ISOLATED' | 'MAIN'} [options.world] - The world context for evaluation (default is 'MAIN').
 	 * @param {boolean} [options.allFrames] - Indicates whether to evaluate in all frames (default is false).
@@ -234,12 +214,59 @@ export default class Page {
 	 * @param {string[]} [options.documentIds] - An array of document identifiers for the frames to evaluate in.
 	 * @returns {Promise<any>} - The result of the evaluation.
 	 */
-	async evaluate(files: string[], args?: any[], options?: {
-		world?: 'ISOLATED' | 'MAIN'
-		allFrames?: boolean
-		frameIds?: number[]
-		documentIds?: string[]
-	}): Promise<any>
+	async evaluate<T extends () => any>(
+		func: T,
+		options?: {
+			world?: 'ISOLATED' | 'MAIN'
+			allFrames?: boolean
+			frameIds?: number[]
+			documentIds?: string[]
+		}
+	): Promise<ReturnType<T>>
+
+	/**
+	 * Evaluates JavaScript function on the page.
+	 * 
+	 * @param {Object} options - An object specifying evaluation options.
+	 * @param {Function} [options.func] - The function to evaluate.
+	 * @param {any[]} [options.args] - Arguments to pass to the evaluated function.
+	 * @param {'ISOLATED' | 'MAIN'} [options.world] - The world context for evaluation (default is 'MAIN').
+	 * @param {boolean} [options.allFrames] - Indicates whether to evaluate in all frames (default is false).
+	 * @param {number[]} [options.frameIds] - An array of frame identifiers where the evaluation should take place.
+	 * @param {string[]} [options.documentIds] - An array of document identifiers for the frames to evaluate in.
+	 * @returns {Promise<any>} - The result of the evaluation.
+	 */
+	async evaluate<T extends (...args: any[]) => any>(
+		options: {
+			func: T
+			args?: Parameters<T>
+			world?: 'ISOLATED' | 'MAIN'
+			allFrames?: boolean
+			frameIds?: number[]
+			documentIds?: string[]
+		},
+	): Promise<ReturnType<T>>
+
+	/**
+	 * Evaluates JS files on the page.
+	 * 
+	 * @param {string[]} files - An array of script file paths to evaluate. 
+	 * @param {Object} [options] - Optional evaluation options.
+	 * @param {'ISOLATED' | 'MAIN'} [options.world] - The world context for evaluation (default is 'MAIN').
+	 * @param {boolean} [options.allFrames] - Indicates whether to evaluate in all frames (default is false).
+	 * @param {number[]} [options.frameIds] - An array of frame identifiers where the evaluation should take place.
+	 * @param {string[]} [options.documentIds] - An array of document identifiers for the frames to evaluate in.
+	 * @returns {Promise<any>} - The result of the evaluation.
+	 */
+	async evaluate(
+		files: string[],
+		options?: {
+			world?: 'ISOLATED' | 'MAIN'
+			allFrames?: boolean
+			frameIds?: number[]
+			documentIds?: string[]
+		}
+	): Promise<any>
 
 	async evaluate() {
 		try {
@@ -344,9 +371,9 @@ export default class Page {
 	}
 
 	/**
-	 * Waits for an element matching the given selector to disappear from the page.
+	 * Waits for an element matching the given CSS selector to disappear from the page.
 	 * 
-	 * @param {string} selectors - The CSS selector or XPath expression to check for element absence.
+	 * @param {string} selectors - The CSS selector to check for element absence.
 	 * @param {Object} [options] - Optional options for waiting.
 	 * @param {number} [options.tryLimit] - The maximum number of attempts (default is 1000).
 	 * @param {number} [options.delay] - The delay in milliseconds between attempts (default is 750ms).
@@ -380,7 +407,7 @@ export default class Page {
 	 * @param {number} [index] - The index of the element to interact with.
 	 * @returns {Promise<void>}
 	 */
-	async waitForXPath(expression: any, options: { tryLimit?: number; delay?: number } = {}, index: number = -1): Promise<void> {
+	async waitForXPath(expression: string, options: { tryLimit?: number; delay?: number } = {}, index: number = -1): Promise<void> {
 		try {
 			await this.waitFor(
 				async (options: any) => this.evaluate(options),
@@ -391,6 +418,37 @@ export default class Page {
 								document.evaluate(expression, document.documentElement, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue ? true : false
 							) : (
 								document.evaluate(expression, document.documentElement, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null).snapshotItem(index) ? true : false
+							)
+						),
+						args: [expression, index]
+					}
+				],
+				options
+			)
+		} catch (error) { throw error }
+	}
+
+	/**
+	 * Waits for an element matching the given XPath expression to disappear from the page.
+	 * 
+	 * @param {string} selectors - The CSS XPath expression to check for element absence.
+	 * @param {Object} [options] - Optional options for waiting.
+	 * @param {number} [options.tryLimit] - The maximum number of attempts (default is 1000).
+	 * @param {number} [options.delay] - The delay in milliseconds between attempts (default is 750ms).
+	 * @param {number} [index = -1] - The index of the element if there are multiple matches.
+	 * @returns {Promise<void>}
+	 */
+	async waitForXPathMiss(expression: string, options: { tryLimit?: number; delay?: number } = {}, index: number = -1): Promise<void> {
+		try {
+			await this.waitFor(
+				async (options: any) => this.evaluate(options),
+				[
+					{
+						func: (expression: string, index: number) => (
+							index === -1 ? (
+								document.evaluate(expression, document.documentElement, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue ? false : true
+							) : (
+								document.evaluate(expression, document.documentElement, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null).snapshotItem(index) ? false : true
 							)
 						),
 						args: [expression, index]
@@ -667,9 +725,8 @@ export default class Page {
 				}
 
 			// Upload the file
-			await this.evaluate({
-				world: executionWorld,
-				func: async (filesIndex: number, selectors: string, caughtElementIndex: number, { scrollToElementBeforeAction, scrollIntoViewOptions }: Pick<PageConfigurations, 'scrollIntoViewOptions' | 'scrollToElementBeforeAction'>) => {
+			await this.evaluate(
+				async (filesIndex: number, selectors: string, caughtElementIndex: number = -1, { scrollToElementBeforeAction, scrollIntoViewOptions }: Pick<PageConfigurations, 'scrollIntoViewOptions' | 'scrollToElementBeforeAction'>) => {
 					function filesToFileList(files: FileList) {
 						const dataTransferer = new DataTransfer()
 						for (const file of files) dataTransferer.items.add(file)
@@ -717,8 +774,9 @@ export default class Page {
 						return true
 					} else return false
 				},
-				args: [filesIndex, selectors, caughtElementIndex || '']
-			})
+				[filesIndex, selectors, caughtElementIndex, this.configurations],
+				{ world: executionWorld }
+			)
 
 			// Revoke all blob urls to remove references
 			files.forEach(({ blobUrl }: any) => URL.revokeObjectURL(blobUrl))
