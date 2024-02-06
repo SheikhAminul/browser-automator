@@ -73,7 +73,7 @@ const selfAutomator = (global = true) => {
 		 * 
 		 * @param {string} url - The URL to navigate to.
 		 */
-		static goto(url: string): void {
+		static async goto(url: string): Promise<void> {
 			try {
 				location.href = url
 			} catch (error) { throw error }
@@ -82,7 +82,7 @@ const selfAutomator = (global = true) => {
 		/**
 		 * Reloads the current page.
 		 */
-		static reload(): void {
+		static async reload(): Promise<void> {
 			try {
 				location.reload()
 			} catch (error) { throw error }
@@ -93,7 +93,7 @@ const selfAutomator = (global = true) => {
 		 * 
 		 * @returns The current URL as a string.
 		 */
-		static url(): string {
+		static async url(): Promise<string> {
 			try {
 				return location.href
 			} catch (error) { throw error }
@@ -102,7 +102,7 @@ const selfAutomator = (global = true) => {
 		/**
 		 * Close the current page.
 		 */
-		static close(): void {
+		static async close(): Promise<void> {
 			try {
 				close()
 			} catch (error) { throw error }
@@ -144,7 +144,7 @@ const selfAutomator = (global = true) => {
 			try {
 				const lastUrl = this.url()
 				await this.waitFor(
-					async (lastUrl: string) => ((this.url()) === lastUrl ? false : true),
+					async (lastUrl: string) => ((await this.url()) === lastUrl ? false : true),
 					[lastUrl],
 					options
 				)
@@ -226,9 +226,9 @@ const selfAutomator = (global = true) => {
 		 *
 		 * @param {string} selectors - The CSS selector or XPath expression to check for existence.
 		 * @param {number} index - The index of the element to check.
-		 * @returns {boolean}
+		 * @returns {Promise<boolean>}
 		 */
-		static elementExists(selectors: string, index: number = -1): boolean {
+		static async elementExists(selectors: string, index: number = -1): Promise<boolean> {
 			try {
 				const element = index === -1 ? (
 					selectors.match(/^(\/|\.\/)/) ? (
@@ -252,19 +252,19 @@ const selfAutomator = (global = true) => {
 		 *
 		 * @param {string} selectors - The CSS selector or XPath expression to click on.
 		 * @param {number} index - The index of the element to interact with.
-		 * @returns {void}
+		 * @returns {Promise<void>}
 		 */
-		static click(selectors: string, index?: number): void
+		static async click(selectors: string, index?: number): Promise<void>
 
 		/**
 		 * Clicks on the element specified by the CSS selector or XPath expression.
 		 *
 		 * @param {Element} element - Represents a DOM element in the document.
-		 * @returns {void}
+		 * @returns {Promise<void>}
 		 */
-		static click(element: Element): void
+		static async click(element: Element): Promise<void>
 
-		static click(): void {
+		static async click(): Promise<void> {
 			try {
 				let selectors: string = '', element: any, index: number = -1
 				if (typeof arguments[0] === 'string') {
@@ -318,19 +318,19 @@ const selfAutomator = (global = true) => {
 		 *
 		 * @param {string} selectors - The CSS selector or XPath expression of the target element.
 		 * @param {number} index - The index of the element to interact with (default is -1).
-		 * @returns {void}
+		 * @returns {Promise<void>}
 		 */
-		static execPasteTo(selectors: string, index?: number): void
+		static async execPasteTo(selectors: string, index?: number): Promise<void>
 
 		/**
 		 * Pastes text from the clipboard to an element specified by the CSS selector or XPath expression.
 		 *
 		 * @param {Element} element - Represents a DOM element in the document.
-		 * @returns {void}
+		 * @returns {Promise<void>}
 		 */
-		static execPasteTo(element: Element): void
+		static async execPasteTo(element: Element): Promise<void>
 
-		static execPasteTo(): void {
+		static async execPasteTo(): Promise<void> {
 			try {
 				let selectors: string = '', element: any, index: number = -1
 				if (typeof arguments[0] === 'string') {
@@ -372,7 +372,7 @@ const selfAutomator = (global = true) => {
 		 * @param {string} selectors - The CSS selector or XPath expression of the target element.
 		 * @param {string} type - The type of event to trigger.
 		 * @param {number} index - The index of the element to interact with.
-		 * @returns {void}
+		 * @returns {Promise<void>}
 		 */
 		static async triggerEvent(selectors: string, type: 'click' | 'input' | 'submit' | 'keydown' | 'keyup' | 'keypress' | 'change' | 'mouseover' | 'mouseout' | 'focus' | 'blur' | 'load' | string, index?: number): Promise<void>
 
@@ -381,7 +381,7 @@ const selfAutomator = (global = true) => {
 		 *
 		 * @param {Element} element - Represents a DOM element in the document.
 		 * @param {string} type - The type of event to trigger.
-		 * @returns {void}
+		 * @returns {Promise<void>}
 		 */
 		static async triggerEvent(element: Element, type: 'click' | 'input' | 'submit' | 'keydown' | 'keyup' | 'keypress' | 'change' | 'mouseover' | 'mouseout' | 'focus' | 'blur' | 'load' | string): Promise<void>
 
@@ -435,7 +435,7 @@ const selfAutomator = (global = true) => {
 		 *
 		 * @param {Element} element - Represents a DOM element in the document.
 		 * @param {any} value - The value to input.
-		 * @returns {void}
+		 * @returns {Promise<void>}
 		 */
 		static async input(element: Element, value: any): Promise<void>
 
@@ -480,7 +480,7 @@ const selfAutomator = (global = true) => {
 		 * @param {string} selectors - The CSS selector or XPath expression of the input element.
 		 * @param {(File)[]} files - An array of files to upload, where each file can be a File object.
 		 * @param {number} index - The index of the element to interact with.
-		 * @returns {void}
+		 * @returns {Promise<void>}
 		 */
 		static async uploadFiles(selectors: string, files: File[], index?: number): Promise<void>
 
@@ -489,7 +489,7 @@ const selfAutomator = (global = true) => {
 		 *
 		 * @param {Element} element - Represents a DOM element in the document.
 		 * @param {(File)[]} files - An array of files to upload, where each file can be a File object.
-		 * @returns {void}
+		 * @returns {Promise<void>}
 		 */
 		static async uploadFiles(element: Element, files: File[]): Promise<void>
 
@@ -562,7 +562,7 @@ const selfAutomator = (global = true) => {
 			 *
 			 * @param {any} tagName - The tag name of the elements to catch.
 			 */
-			catch: function (tagName: any): void {
+			catch: async function (tagName: any): Promise<void> {
 				try {
 					if (!window.elementCatcher) {
 						window.elementCatcher = {
@@ -582,7 +582,7 @@ const selfAutomator = (global = true) => {
 			/**
 			 * Terminates element catching and restores the original createElement function of JS.
 			 */
-			terminate: function (): void {
+			terminate: async function (): Promise<void> {
 				try {
 					if (window.elementCatcher) {
 						document.createElement = window.elementCatcher.originalFunc
@@ -595,7 +595,7 @@ const selfAutomator = (global = true) => {
 			/**
 			 * Clears the element catcher, restoring the original createElement function.
 			 */
-			clear: function (): void {
+			clear: async function (): Promise<void> {
 				try {
 					if (window.elementCatcher) {
 						if (window.elementCatcher.originalFunc) document.createElement = window.elementCatcher.originalFunc
@@ -609,7 +609,7 @@ const selfAutomator = (global = true) => {
 			/**
 			 * Enables manual clicks on the page.
 			 */
-			enable: function (): void {
+			enable: async function (): Promise<void> {
 				try {
 					if (window.manualClickPreventer) {
 						window.manualClickPreventer.remove()
@@ -620,7 +620,7 @@ const selfAutomator = (global = true) => {
 			/**
 			 * Disables manual clicks on the page.
 			 */
-			disable: function (): void {
+			disable: async function (): Promise<void> {
 				try {
 					if (!window.manualClickPreventer) {
 						window.manualClickPreventer = document.createElement('div')
