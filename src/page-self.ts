@@ -374,7 +374,7 @@ const selfAutomator = (global = true) => {
 		 * @param {number} index - The index of the element to interact with.
 		 * @returns {void}
 		 */
-		static triggerEvent(selectors: string, type: 'click' | 'input' | 'submit' | 'keydown' | 'keyup' | 'keypress' | 'change' | 'mouseover' | 'mouseout' | 'focus' | 'blur' | 'load' | string, index?: number): void
+		static async triggerEvent(selectors: string, type: 'click' | 'input' | 'submit' | 'keydown' | 'keyup' | 'keypress' | 'change' | 'mouseover' | 'mouseout' | 'focus' | 'blur' | 'load' | string, index?: number): Promise<void>
 
 		/**
 		 * Triggers an event on the element specified by the CSS selector or XPath expression.
@@ -383,9 +383,9 @@ const selfAutomator = (global = true) => {
 		 * @param {string} type - The type of event to trigger.
 		 * @returns {void}
 		 */
-		static triggerEvent(element: Element, type: 'click' | 'input' | 'submit' | 'keydown' | 'keyup' | 'keypress' | 'change' | 'mouseover' | 'mouseout' | 'focus' | 'blur' | 'load' | string): void
+		static async triggerEvent(element: Element, type: 'click' | 'input' | 'submit' | 'keydown' | 'keyup' | 'keypress' | 'change' | 'mouseover' | 'mouseout' | 'focus' | 'blur' | 'load' | string): Promise<void>
 
-		static triggerEvent(): void {
+		static async triggerEvent(): Promise<void> {
 			try {
 				let selectors: string = '', element: any, type: string, index: number = -1
 				if (typeof arguments[0] === 'string') {
@@ -428,7 +428,7 @@ const selfAutomator = (global = true) => {
 		 * @param {number} index - The index of the element to interact with.
 		 * @returns {Promise<void>}
 		 */
-		static input(selectors: string, value: any, index?: number): void
+		static async input(selectors: string, value: any, index?: number): Promise<void>
 
 		/**
 		 * Inputs a value into the element specified by the CSS selector or XPath expression.
@@ -437,9 +437,9 @@ const selfAutomator = (global = true) => {
 		 * @param {any} value - The value to input.
 		 * @returns {void}
 		 */
-		static input(element: Element, value: any): void
+		static async input(element: Element, value: any): Promise<void>
 
-		static input(): void {
+		static async input(): Promise<void> {
 			try {
 				let selectors: string = '', element: any, value: any, index: number = -1
 				if (typeof arguments[0] === 'string') {
@@ -482,7 +482,7 @@ const selfAutomator = (global = true) => {
 		 * @param {number} index - The index of the element to interact with.
 		 * @returns {void}
 		 */
-		static uploadFiles(selectors: string, files: File[], index?: number): void
+		static async uploadFiles(selectors: string, files: File[], index?: number): Promise<void>
 
 		/**
 		 * Uploads files to an input element specified by the CSS selector or XPath expression.
@@ -491,9 +491,9 @@ const selfAutomator = (global = true) => {
 		 * @param {(File)[]} files - An array of files to upload, where each file can be a File object.
 		 * @returns {void}
 		 */
-		static uploadFiles(element: Element, files: File[]): void
+		static async uploadFiles(element: Element, files: File[]): Promise<void>
 
-		static uploadFiles(): void {
+		static async uploadFiles(): Promise<void> {
 			try {
 				let selectors: string = '', element: any, files: File[], index: number = -1
 				if (typeof arguments[0] === 'string') {

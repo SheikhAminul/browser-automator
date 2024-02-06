@@ -1,6 +1,6 @@
 {
 	"name": "browser-automator",
-	"version": "2.3.32",
+	"version": "2.3.34",
 	"description": "Puppeteer alternative for Chrome extensions. A module for Chrome extensions that functions similarly to Puppeteer.",
 	"main": "lib/index.js",
 	"types": "lib/index.d.ts",
@@ -31,11 +31,11 @@
 	],
 	"homepage": "https://github.com/SheikhAminul/browser-automator#readme",
 	"devDependencies": {
-		"typescript": "^5.2.2",
-		"@types/chrome": "^0.0.248",
-		"ts-loader": "^9.5.0",
-		"webpack": "^5.89.0",
+		"typescript": "^5.3.3",
+		"@types/chrome": "^0.0.259",
+		"ts-loader": "^9.5.1",
+		"webpack": "^5.90.0",
 		"webpack-cli": "^5.1.4",
-		"@types/offscreencanvas": "^2019.7.2"
+		"@types/offscreencanvas": "^2019.7.3"
 	}
 }

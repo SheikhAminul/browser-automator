@@ -23,7 +23,7 @@ export default class Browser {
 	 * Creates a new Browser instance.
 	 */
 	constructor() {
-		addEventListener('beforeunload', this.beforeUnloadListener, { capture: true })
+		onbeforeunload = this.beforeUnloadListener
 		this.onPageCloseListener = this.onPageClose.bind(this)
 		chrome.tabs.onRemoved.addListener(this.onPageCloseListener as any)
 	}
@@ -60,7 +60,7 @@ export default class Browser {
 	 */
 	async close() {
 		try {
-			removeEventListener('beforeunload', this.beforeUnloadListener, { capture: true })
+			onbeforeunload = null
 			chrome.tabs.onRemoved.removeListener(this.onPageCloseListener as any)
 			await Promise.all(
 				this.availablePages.map(async (page: any) => {
