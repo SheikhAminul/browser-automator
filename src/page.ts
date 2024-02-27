@@ -82,11 +82,11 @@ export default class Page {
 	 * @param {number} options.originWindowId - The ID of the tab's origin window. If supplied the tab will be moved in that window when closing the browser-automator instance instead of closing the tab.
 	 * @param {number} options.activeInOrigin - Whether the page/tab should be active in the origin window when moved to the origin window.
 	 */
-	constructor({ tabId, windowId, originWindowId, activeInOrigin }: { tabId: number; windowId: number, originWindowId: number, activeInOrigin: number }) {
+	constructor({ tabId, windowId, originWindowId, activeInOrigin }: { tabId: number; windowId: number, originWindowId?: number, activeInOrigin?: number }) {
 		this.tabId = tabId
 		this.windowId = windowId
-		this.originWindowId = originWindowId
-		this.activeInOrigin = activeInOrigin
+		if (originWindowId) this.originWindowId = originWindowId
+		if (activeInOrigin) this.activeInOrigin = activeInOrigin
 
 		this.elementCatcher.catch = this.elementCatcher.catch.bind(this)
 		this.elementCatcher.terminate = this.elementCatcher.terminate.bind(this)
