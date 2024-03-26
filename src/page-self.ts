@@ -76,7 +76,7 @@ const selfAutomator = (global = true) => {
 		static async goto(url: string): Promise<void> {
 			try {
 				location.href = url
-			} catch (error) { throw error }
+			} catch (glitch) { throw glitch }
 		}
 
 		/**
@@ -85,7 +85,7 @@ const selfAutomator = (global = true) => {
 		static async reload(): Promise<void> {
 			try {
 				location.reload()
-			} catch (error) { throw error }
+			} catch (glitch) { throw glitch }
 		}
 
 		/**
@@ -96,7 +96,7 @@ const selfAutomator = (global = true) => {
 		static async url(): Promise<string> {
 			try {
 				return location.href
-			} catch (error) { throw error }
+			} catch (glitch) { throw glitch }
 		}
 
 		/**
@@ -105,7 +105,7 @@ const selfAutomator = (global = true) => {
 		static async close(): Promise<void> {
 			try {
 				close()
-			} catch (error) { throw error }
+			} catch (glitch) { throw glitch }
 		}
 
 		/**
@@ -129,7 +129,7 @@ const selfAutomator = (global = true) => {
 				}
 				if (value) return value
 				else throw new Error('Waiting timed out...')
-			} catch (error) { throw error }
+			} catch (glitch) { throw glitch }
 		}
 
 		/**
@@ -148,7 +148,7 @@ const selfAutomator = (global = true) => {
 					[lastUrl],
 					options
 				)
-			} catch (error) { throw error }
+			} catch (glitch) { throw glitch }
 		}
 
 		/**
@@ -170,7 +170,7 @@ const selfAutomator = (global = true) => {
 					[selectors, index],
 					options
 				)
-			} catch (error) { throw error }
+			} catch (glitch) { throw glitch }
 		}
 
 		/**
@@ -192,7 +192,7 @@ const selfAutomator = (global = true) => {
 					[selectors, index],
 					options
 				)
-			} catch (error) { throw error }
+			} catch (glitch) { throw glitch }
 		}
 
 		/**
@@ -218,7 +218,7 @@ const selfAutomator = (global = true) => {
 					[expression, index],
 					options
 				)
-			} catch (error) { throw error }
+			} catch (glitch) { throw glitch }
 		}
 
 		/**
@@ -244,7 +244,7 @@ const selfAutomator = (global = true) => {
 					)
 				)
 				return element ? true : false
-			} catch (error) { throw error }
+			} catch (glitch) { throw glitch }
 		}
 
 		/**
@@ -296,7 +296,7 @@ const selfAutomator = (global = true) => {
 					scrollToElementBeforeAction && element.scrollIntoView(scrollIntoViewOptions)
 					element.click()
 				} else throw new Error(`No element(s) found for the CSS Selectors or XPath (${selectors}${index === -1 ? '' : `, ${index}`}).`)
-			} catch (error) { throw error }
+			} catch (glitch) { throw glitch }
 		}
 
 		/**
@@ -363,7 +363,7 @@ const selfAutomator = (global = true) => {
 					if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') element.select()
 					document.execCommand('paste')
 				} else throw new Error(`No element(s) found for the CSS Selectors or XPath (${selectors}${index === -1 ? '' : `, ${index}`}).`)
-			} catch (error) { throw error }
+			} catch (glitch) { throw glitch }
 		}
 
 		/**
@@ -417,7 +417,7 @@ const selfAutomator = (global = true) => {
 					scrollToElementBeforeAction && element.scrollIntoView(scrollIntoViewOptions)
 					triggerEvent(element, type)
 				} else throw new Error(`No element(s) found for the CSS Selectors or XPath (${selectors}${index === -1 ? '' : `, ${index}`}).`)
-			} catch (error) { throw error }
+			} catch (glitch) { throw glitch }
 		}
 
 		/**
@@ -471,7 +471,7 @@ const selfAutomator = (global = true) => {
 					scrollToElementBeforeAction && element.scrollIntoView(scrollIntoViewOptions)
 					setValue(element, value)
 				} else throw new Error(`No element(s) found for the CSS Selectors or XPath (${selectors}${index === -1 ? '' : `, ${index}`}).`)
-			} catch (error) { throw error }
+			} catch (glitch) { throw glitch }
 		}
 
 		/**
@@ -528,7 +528,7 @@ const selfAutomator = (global = true) => {
 					triggerEvent(element, 'input')
 					triggerEvent(element, 'change')
 				} else throw new Error(`No element(s) found for the CSS Selectors or XPath (${selectors}${index === -1 ? '' : `, ${index}`}).`)
-			} catch (error) { throw error }
+			} catch (glitch) { throw glitch }
 		}
 
 		/**
@@ -576,7 +576,7 @@ const selfAutomator = (global = true) => {
 							return element
 						}
 					}
-				} catch (error) { throw error }
+				} catch (glitch) { throw glitch }
 			},
 
 			/**
@@ -589,7 +589,7 @@ const selfAutomator = (global = true) => {
 						delete window.elementCatcher.originalFunc
 						delete window.elementCatcher.tagName
 					}
-				} catch (error) { throw error }
+				} catch (glitch) { throw glitch }
 			},
 
 			/**
@@ -601,7 +601,7 @@ const selfAutomator = (global = true) => {
 						if (window.elementCatcher.originalFunc) document.createElement = window.elementCatcher.originalFunc
 						delete window.elementCatcher
 					}
-				} catch (error) { throw error }
+				} catch (glitch) { throw glitch }
 			}
 		}
 
@@ -615,7 +615,7 @@ const selfAutomator = (global = true) => {
 						window.manualClickPreventer.remove()
 						delete window.manualClickPreventer
 					}
-				} catch (error) { throw error }
+				} catch (glitch) { throw glitch }
 			},
 			/**
 			 * Disables manual clicks on the page.
@@ -628,7 +628,7 @@ const selfAutomator = (global = true) => {
 						window.manualClickPreventer.addEventListener('contextmenu', (event: { preventDefault: () => any }) => event.preventDefault())
 						document.body.appendChild(window.manualClickPreventer)
 					}
-				} catch (error) { throw error }
+				} catch (glitch) { throw glitch }
 			}
 		}
 	}

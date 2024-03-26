@@ -79,7 +79,7 @@ export default class Browser {
 				})
 			)
 			this.availablePages = []
-		} catch (error) { throw error }
+		} catch (glitch) { throw glitch }
 	}
 
 	/**
@@ -142,6 +142,6 @@ export default class Browser {
 			this.availablePages.push(page)
 			this?.onPageAdded?.(page)
 			return page
-		} catch (error) { throw error }
+		} catch (glitch) { throw glitch }
 	}
 }

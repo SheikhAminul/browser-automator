@@ -48,13 +48,20 @@ export default class Page {
 	 * @type {Object} - Represents the configurations for the Page instance.
 	 */
 	configurations: PageConfigurations = {
-		tryLimit: 50,
-		delay: 750,
+		tryLimit: 30,
+		delay: 1000,
 		scrollToElementBeforeAction: true,
 		scrollIntoViewOptions: {
 			behavior: 'smooth',
 			block: 'center'
 		}
+	}
+
+	/**
+	 * Function to be called when the Page instance encounters a glitch.
+	 */
+	async handleGlitch(glitch: any) {
+		return `${glitch}\nPage URL: '${await chrome.tabs.get(this.tabId).then(({ url }) => url).catch(() => 'N/A')}'`
 	}
 
 	/**
@@ -121,7 +128,7 @@ export default class Page {
 					tab = await chrome.tabs.get(this.tabId)
 				} while (tab.pendingUrl === 'about:blank' || tab.url === 'about:blank' || tab.status !== 'complete')
 			}
-		} catch (error) { throw error }
+		} catch (glitch) { throw this.handleGlitch(`Failed to navigate to URL '${url}'.\n${glitch}`) }
 	}
 
 	/**
@@ -132,7 +139,7 @@ export default class Page {
 	async reload(): Promise<void> {
 		try {
 			await this.goto(await this.url() as any)
-		} catch (error) { throw error }
+		} catch (glitch) { throw this.handleGlitch(`Failed to reload the page.\n${glitch}`) }
 	}
 
 	/**
@@ -144,7 +151,7 @@ export default class Page {
 		try {
 			const { url } = await chrome.tabs.get(this.tabId)
 			return url as string
-		} catch (error) { throw error }
+		} catch (glitch) { throw this.handleGlitch(`Failed to get the URL of the page.\n${glitch}`) }
 	}
 
 	/**
@@ -155,7 +162,7 @@ export default class Page {
 	async close(): Promise<void> {
 		try {
 			await chrome.windows.remove(this.windowId).catch(() => { })
-		} catch (error) { throw error }
+		} catch (glitch) { throw this.handleGlitch(`Failed to close the page.\n${glitch}`) }
 	}
 
 	/**
@@ -166,7 +173,7 @@ export default class Page {
 	async bringToFront(): Promise<void> {
 		try {
 			await chrome.windows.update(this.windowId, { focused: true })
-		} catch (error) { throw error }
+		} catch (glitch) { throw this.handleGlitch(`Failed to bring the page to the front.\n${glitch}`) }
 	}
 
 	/**
@@ -177,7 +184,7 @@ export default class Page {
 	async hideFromFront(): Promise<void> {
 		try {
 			await chrome.windows.update(this.windowId, { focused: false })
-		} catch (error) { throw error }
+		} catch (glitch) { throw this.handleGlitch(`Failed to hide the page from the front.\n${glitch}`) }
 	}
 
 	/**
@@ -269,16 +276,16 @@ export default class Page {
 	): Promise<any>
 
 	async evaluate() {
+		let options: {
+			func?: Function
+			files?: string[]
+			args?: any[]
+			world?: 'ISOLATED' | 'MAIN'
+			allFrames?: boolean
+			frameIds?: number[]
+			documentIds?: string[]
+		} = {}
 		try {
-			let options: {
-				func?: Function
-				files?: string[]
-				args?: any[]
-				world?: 'ISOLATED' | 'MAIN'
-				allFrames?: boolean
-				frameIds?: number[]
-				documentIds?: string[]
-			}
 			if (typeof arguments[0] === 'function') {
 				const [func, args, others] = arguments
 				options = { func, args, ...(others || {}) }
@@ -297,7 +304,7 @@ export default class Page {
 				...chooseProperties(options, ['func', 'files', 'args', 'world'])
 			} as any)
 			return execution?.[0]?.result
-		} catch (error) { throw error }
+		} catch (glitch) { throw this.handleGlitch(`Failed to evaluate ${options?.func ? `function '${options.func?.name}' with arguments '${JSON.stringify(options.args || [])}'` : `file(s) '${JSON.stringify(options.files || [])}'`} '' on the page.\n${glitch}`) }
 	}
 
 	/**
@@ -321,7 +328,7 @@ export default class Page {
 			}
 			if (value) return value
 			else throw new Error('Waiting timed out...')
-		} catch (error) { throw error }
+		} catch (glitch) { throw this.handleGlitch(`Glitch while waiting for function '${func?.name}' with arguments '${JSON.stringify(args || [])}'.\n${glitch}`) }
 	}
 
 	/**
@@ -340,7 +347,7 @@ export default class Page {
 				[lastUrl],
 				options
 			)
-		} catch (error) { throw error }
+		} catch (glitch) { throw this.handleGlitch(`Glitch while waiting for navigation.\n${glitch}`) }
 	}
 
 	/**
@@ -367,7 +374,7 @@ export default class Page {
 				],
 				options
 			)
-		} catch (error) { throw error }
+		} catch (glitch) { throw this.handleGlitch(`Glitch while waiting for the CSS Selectors '${selectors}'${index === -1 ? '' : `[${index}]`}.\n${glitch}`) }
 	}
 
 	/**
@@ -394,7 +401,7 @@ export default class Page {
 				],
 				options
 			)
-		} catch (error) { throw error }
+		} catch (glitch) { throw this.handleGlitch(`Glitch while waiting for the CSS Selectors '${selectors}'${index === -1 ? '' : `[${index}]`} to be missing.\n${glitch}`) }
 	}
 
 	/**
@@ -425,7 +432,7 @@ export default class Page {
 				],
 				options
 			)
-		} catch (error) { throw error }
+		} catch (glitch) { throw this.handleGlitch(`Glitch while waiting for the XPath '${expression}'${index === -1 ? '' : `[${index}]`}.\n${glitch}`) }
 	}
 
 	/**
@@ -456,7 +463,7 @@ export default class Page {
 				],
 				options
 			)
-		} catch (error) { throw error }
+		} catch (glitch) { throw this.handleGlitch(`Glitch while waiting for the XPath '${expression}'${index === -1 ? '' : `[${index}]`} to be missing.\n${glitch}`) }
 	}
 
 	/**
@@ -487,7 +494,7 @@ export default class Page {
 				},
 				args: [selectors, index]
 			})
-		} catch (error) { throw error }
+		} catch (glitch) { throw this.handleGlitch(`Glitch while checking if element with the CSS Selectors or XPath '${selectors}'${index === -1 ? '' : `[${index}]`} exists.\n${glitch}`) }
 	}
 
 	/**
@@ -521,8 +528,8 @@ export default class Page {
 					} else return false
 				},
 				args: [selectors, index, this.configurations]
-			})) throw new Error(`No element(s) found for the CSS Selectors or XPath (${selectors}${index === -1 ? '' : `, ${index}`}).`)
-		} catch (error) { throw error }
+			})) throw new Error('No element(s) found for the given CSS Selectors or XPath.')
+		} catch (glitch) { throw this.handleGlitch(`Failed to click on element with the CSS Selectors or XPath '${selectors}'${index === -1 ? '' : `[${index}]`}.\n${glitch}`) }
 	}
 
 	/**
@@ -572,8 +579,8 @@ export default class Page {
 					} else return false
 				},
 				args: [selectors, index, this.configurations]
-			})) throw new Error(`No element(s) found for the CSS Selectors or XPath (${selectors}${index === -1 ? '' : `, ${index}`}).`)
-		} catch (error) { throw error }
+			})) throw new Error('No element(s) found for the given CSS Selectors or XPath.')
+		} catch (glitch) { throw this.handleGlitch(`Failed to paste to element with the CSS Selectors or XPath '${selectors}'${index === -1 ? '' : `[${index}]`}.\n${glitch}`) }
 	}
 
 	/**
@@ -616,8 +623,8 @@ export default class Page {
 					} else return false
 				},
 				args: [selectors, type, index, this.configurations]
-			})) throw new Error(`No element(s) found for the CSS Selectors or XPath (${selectors}${index === -1 ? '' : `, ${index}`}).`)
-		} catch (error) { throw error }
+			})) throw new Error('No element(s) found for the given CSS Selectors or XPath.')
+		} catch (glitch) { throw this.handleGlitch(`Failed to trigger event '${type}' on element with the CSS Selectors or XPath '${selectors}'${index === -1 ? '' : `[${index}]`}.\n${glitch}`) }
 	}
 
 	/**
@@ -671,8 +678,8 @@ export default class Page {
 					} else return false
 				},
 				args: [selectors, value, index, this.configurations]
-			})) throw new Error(`No element(s) found for the CSS Selectors or XPath (${selectors}${index === -1 ? '' : `, ${index}`}).`)
-		} catch (error) { throw error }
+			})) throw new Error('No element(s) found for the given CSS Selectors or XPath.')
+		} catch (glitch) { throw this.handleGlitch(`Failed to input value '${value}' into element with the CSS Selectors or XPath '${selectors}'${index === -1 ? '' : `[${index}]`}.\n${glitch}`) }
 	}
 
 	/**
@@ -780,7 +787,7 @@ export default class Page {
 
 			// Revoke all blob urls to remove references
 			files.forEach(({ blobUrl }: any) => URL.revokeObjectURL(blobUrl))
-		} catch (error) { throw error }
+		} catch (glitch) { throw this.handleGlitch(`Failed to upload files.\n${glitch}`) }
 	}
 
 	/**
@@ -798,7 +805,7 @@ export default class Page {
 				dataUrl = (await blobToDataUrl(await (croppedImage as any).convertToBlob())) as string
 			}
 			return dataUrl
-		} catch (error) { throw error }
+		} catch (glitch) { throw this.handleGlitch(`Failed to take a screenshot.\n${glitch}`) }
 	}
 
 	elementCatcher = {
@@ -827,7 +834,7 @@ export default class Page {
 					},
 					args: [tagName]
 				})
-			} catch (error) { throw error }
+			} catch (glitch) { throw glitch }
 		},
 
 		/**
@@ -845,7 +852,7 @@ export default class Page {
 						}
 					}
 				})
-			} catch (error) { throw error }
+			} catch (glitch) { throw glitch }
 		},
 
 		/**
@@ -862,7 +869,7 @@ export default class Page {
 						}
 					}
 				})
-			} catch (error) { throw error }
+			} catch (glitch) { throw glitch }
 		}
 	} as any
 
@@ -880,7 +887,7 @@ export default class Page {
 						}
 					}
 				})
-			} catch (error) { throw error }
+			} catch (glitch) { throw glitch }
 		},
 		/**
 		 * Disables manual clicks on the page.
@@ -897,7 +904,7 @@ export default class Page {
 						}
 					}
 				})
-			} catch (error) { throw error }
+			} catch (glitch) { throw glitch }
 		}
 	} as any
 }
