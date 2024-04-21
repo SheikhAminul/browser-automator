@@ -166,6 +166,18 @@ export default class Page {
 	}
 
 	/**
+	 * Zoom the current page.
+	 * 
+	 * @param {number} zoomFactor - The new zoom factor. Use a value of 0 here to set the tab to its current default zoom factor. Values greater than zero specify a (possibly non-default) zoom factor for the tab.
+	 * @returns A promise that resolves when the zoom is applied.
+	 */
+	async zoom(zoomFactor: number) {
+		try {
+			if (zoomFactor !== await chrome.tabs.getZoom(this.tabId)) await chrome.tabs.setZoom(this.tabId, zoomFactor)
+		} catch (glitch) { throw this.handleGlitch(`Failed to zoom the page.\n${glitch}`) }
+	}
+
+	/**
 	 * Brings the Chrome browser window associated with the page to the front.
 	 * 
 	 * @returns A promise that resolves when the window is brought to the front.

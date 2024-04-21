@@ -105,6 +105,12 @@ Represents a Page instance for interacting with Chrome browser pages.
 
   Close the current page.
 
+* #### `zoom(zoomFactor: number): Promise<void>`
+
+  Zoom the current page.
+
+  - `zoomFactor` (number) - The new zoom factor. Use a value of 0 here to set the tab to its current default zoom factor. Values greater than zero specify a (possibly non-default) zoom factor for the tab.
+
 * #### `bringToFront(): Promise<void>`
 
   Brings the Chrome browser window associated with the page to the front.

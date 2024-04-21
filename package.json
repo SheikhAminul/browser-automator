@@ -1,6 +1,6 @@
 {
 	"name": "browser-automator",
-	"version": "2.3.37",
+	"version": "2.4.37",
 	"description": "Puppeteer alternative for Chrome extensions. A module for Chrome extensions that functions similarly to Puppeteer.",
 	"main": "lib/index.js",
 	"types": "lib/index.d.ts",
