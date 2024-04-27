@@ -128,7 +128,7 @@ export default class Page {
 					tab = await chrome.tabs.get(this.tabId)
 				} while (tab.pendingUrl === 'about:blank' || tab.url === 'about:blank' || tab.status !== 'complete')
 			}
-		} catch (glitch) { throw this.handleGlitch(`Failed to navigate to URL '${url}'.\n${glitch}`) }
+		} catch (glitch) { throw await this.handleGlitch(`Failed to navigate to URL '${url}'.\n${glitch}`) }
 	}
 
 	/**
@@ -139,7 +139,7 @@ export default class Page {
 	async reload(): Promise<void> {
 		try {
 			await this.goto(await this.url() as any)
-		} catch (glitch) { throw this.handleGlitch(`Failed to reload the page.\n${glitch}`) }
+		} catch (glitch) { throw await this.handleGlitch(`Failed to reload the page.\n${glitch}`) }
 	}
 
 	/**
@@ -151,7 +151,7 @@ export default class Page {
 		try {
 			const { url } = await chrome.tabs.get(this.tabId)
 			return url as string
-		} catch (glitch) { throw this.handleGlitch(`Failed to get the URL of the page.\n${glitch}`) }
+		} catch (glitch) { throw await this.handleGlitch(`Failed to get the URL of the page.\n${glitch}`) }
 	}
 
 	/**
@@ -162,7 +162,7 @@ export default class Page {
 	async close(): Promise<void> {
 		try {
 			await chrome.windows.remove(this.windowId).catch(() => { })
-		} catch (glitch) { throw this.handleGlitch(`Failed to close the page.\n${glitch}`) }
+		} catch (glitch) { throw await this.handleGlitch(`Failed to close the page.\n${glitch}`) }
 	}
 
 	/**
@@ -174,7 +174,7 @@ export default class Page {
 	async zoom(zoomFactor: number) {
 		try {
 			if (zoomFactor !== await chrome.tabs.getZoom(this.tabId)) await chrome.tabs.setZoom(this.tabId, zoomFactor)
-		} catch (glitch) { throw this.handleGlitch(`Failed to zoom the page.\n${glitch}`) }
+		} catch (glitch) { throw await this.handleGlitch(`Failed to zoom the page.\n${glitch}`) }
 	}
 
 	/**
@@ -185,7 +185,7 @@ export default class Page {
 	async bringToFront(): Promise<void> {
 		try {
 			await chrome.windows.update(this.windowId, { focused: true })
-		} catch (glitch) { throw this.handleGlitch(`Failed to bring the page to the front.\n${glitch}`) }
+		} catch (glitch) { throw await this.handleGlitch(`Failed to bring the page to the front.\n${glitch}`) }
 	}
 
 	/**
@@ -196,7 +196,7 @@ export default class Page {
 	async hideFromFront(): Promise<void> {
 		try {
 			await chrome.windows.update(this.windowId, { focused: false })
-		} catch (glitch) { throw this.handleGlitch(`Failed to hide the page from the front.\n${glitch}`) }
+		} catch (glitch) { throw await this.handleGlitch(`Failed to hide the page from the front.\n${glitch}`) }
 	}
 
 	/**
@@ -316,7 +316,7 @@ export default class Page {
 				...chooseProperties(options, ['func', 'files', 'args', 'world'])
 			} as any)
 			return execution?.[0]?.result
-		} catch (glitch) { throw this.handleGlitch(`Failed to evaluate ${options?.func ? `function '${options.func?.name}' with arguments '${JSON.stringify(options.args || [])}'` : `file(s) '${JSON.stringify(options.files || [])}'`} '' on the page.\n${glitch}`) }
+		} catch (glitch) { throw await this.handleGlitch(`Failed to evaluate ${options?.func ? `function '${options.func?.name}' with arguments '${JSON.stringify(options.args || [])}'` : `file(s) '${JSON.stringify(options.files || [])}'`} '' on the page.\n${glitch}`) }
 	}
 
 	/**
@@ -340,7 +340,7 @@ export default class Page {
 			}
 			if (value) return value
 			else throw new Error('Waiting timed out...')
-		} catch (glitch) { throw this.handleGlitch(`Glitch while waiting for function '${func?.name}' with arguments '${JSON.stringify(args || [])}'.\n${glitch}`) }
+		} catch (glitch) { throw await this.handleGlitch(`Glitch while waiting for function '${func?.name}' with arguments '${JSON.stringify(args || [])}'.\n${glitch}`) }
 	}
 
 	/**
@@ -359,7 +359,7 @@ export default class Page {
 				[lastUrl],
 				options
 			)
-		} catch (glitch) { throw this.handleGlitch(`Glitch while waiting for navigation.\n${glitch}`) }
+		} catch (glitch) { throw await this.handleGlitch(`Glitch while waiting for navigation.\n${glitch}`) }
 	}
 
 	/**
@@ -386,7 +386,7 @@ export default class Page {
 				],
 				options
 			)
-		} catch (glitch) { throw this.handleGlitch(`Glitch while waiting for the CSS Selectors '${selectors}'${index === -1 ? '' : `[${index}]`}.\n${glitch}`) }
+		} catch (glitch) { throw await this.handleGlitch(`Glitch while waiting for the CSS Selectors '${selectors}'${index === -1 ? '' : `[${index}]`}.\n${glitch}`) }
 	}
 
 	/**
@@ -413,7 +413,7 @@ export default class Page {
 				],
 				options
 			)
-		} catch (glitch) { throw this.handleGlitch(`Glitch while waiting for the CSS Selectors '${selectors}'${index === -1 ? '' : `[${index}]`} to be missing.\n${glitch}`) }
+		} catch (glitch) { throw await this.handleGlitch(`Glitch while waiting for the CSS Selectors '${selectors}'${index === -1 ? '' : `[${index}]`} to be missing.\n${glitch}`) }
 	}
 
 	/**
@@ -444,7 +444,7 @@ export default class Page {
 				],
 				options
 			)
-		} catch (glitch) { throw this.handleGlitch(`Glitch while waiting for the XPath '${expression}'${index === -1 ? '' : `[${index}]`}.\n${glitch}`) }
+		} catch (glitch) { throw await this.handleGlitch(`Glitch while waiting for the XPath '${expression}'${index === -1 ? '' : `[${index}]`}.\n${glitch}`) }
 	}
 
 	/**
@@ -475,7 +475,7 @@ export default class Page {
 				],
 				options
 			)
-		} catch (glitch) { throw this.handleGlitch(`Glitch while waiting for the XPath '${expression}'${index === -1 ? '' : `[${index}]`} to be missing.\n${glitch}`) }
+		} catch (glitch) { throw await this.handleGlitch(`Glitch while waiting for the XPath '${expression}'${index === -1 ? '' : `[${index}]`} to be missing.\n${glitch}`) }
 	}
 
 	/**
@@ -490,13 +490,13 @@ export default class Page {
 			return await this.evaluate({
 				func: (selectors: string, index: number) => {
 					const element = index === -1 ? (
-						selectors.match(/^(\/|\.\/)/) ? (
+						selectors.match(/^(\/|\.\/|\()/) ? (
 							document.evaluate(selectors, document.documentElement, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue
 						) : (
 							document.querySelector(selectors) as any
 						)
 					) : (
-						selectors.match(/^(\/|\.\/)/) ? (
+						selectors.match(/^(\/|\.\/|\()/) ? (
 							document.evaluate(selectors, document.documentElement, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null).snapshotItem(index)
 						) : (
 							document.querySelectorAll(selectors)[index] as any
@@ -506,7 +506,7 @@ export default class Page {
 				},
 				args: [selectors, index]
 			})
-		} catch (glitch) { throw this.handleGlitch(`Glitch while checking if element with the CSS Selectors or XPath '${selectors}'${index === -1 ? '' : `[${index}]`} exists.\n${glitch}`) }
+		} catch (glitch) { throw await this.handleGlitch(`Glitch while checking if element with the CSS Selectors or XPath '${selectors}'${index === -1 ? '' : `[${index}]`} exists.\n${glitch}`) }
 	}
 
 	/**
@@ -521,13 +521,13 @@ export default class Page {
 			if (!await this.evaluate({
 				func: (selectors: string, index: any, { scrollToElementBeforeAction, scrollIntoViewOptions }: Pick<PageConfigurations, 'scrollIntoViewOptions' | 'scrollToElementBeforeAction'>) => {
 					const element = index === -1 ? (
-						selectors.match(/^(\/|\.\/)/) ? (
+						selectors.match(/^(\/|\.\/|\()/) ? (
 							document.evaluate(selectors, document.documentElement, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue
 						) : (
 							document.querySelector(selectors) as any
 						)
 					) : (
-						selectors.match(/^(\/|\.\/)/) ? (
+						selectors.match(/^(\/|\.\/|\()/) ? (
 							document.evaluate(selectors, document.documentElement, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null).snapshotItem(index)
 						) : (
 							document.querySelectorAll(selectors)[index] as any
@@ -541,7 +541,7 @@ export default class Page {
 				},
 				args: [selectors, index, this.configurations]
 			})) throw new Error('No element(s) found for the given CSS Selectors or XPath.')
-		} catch (glitch) { throw this.handleGlitch(`Failed to click on element with the CSS Selectors or XPath '${selectors}'${index === -1 ? '' : `[${index}]`}.\n${glitch}`) }
+		} catch (glitch) { throw await this.handleGlitch(`Failed to click on element with the CSS Selectors or XPath '${selectors}'${index === -1 ? '' : `[${index}]`}.\n${glitch}`) }
 	}
 
 	/**
@@ -570,13 +570,13 @@ export default class Page {
 			if (!await this.evaluate({
 				func: (selectors: string, index: number, { scrollToElementBeforeAction, scrollIntoViewOptions }: Pick<PageConfigurations, 'scrollIntoViewOptions' | 'scrollToElementBeforeAction'>) => {
 					const element = index === -1 ? (
-						selectors.match(/^(\/|\.\/)/) ? (
+						selectors.match(/^(\/|\.\/|\()/) ? (
 							document.evaluate(selectors, document.documentElement, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue
 						) : (
 							document.querySelector(selectors) as any
 						)
 					) : (
-						selectors.match(/^(\/|\.\/)/) ? (
+						selectors.match(/^(\/|\.\/|\()/) ? (
 							document.evaluate(selectors, document.documentElement, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null).snapshotItem(index)
 						) : (
 							document.querySelectorAll(selectors)[index] as any
@@ -592,7 +592,7 @@ export default class Page {
 				},
 				args: [selectors, index, this.configurations]
 			})) throw new Error('No element(s) found for the given CSS Selectors or XPath.')
-		} catch (glitch) { throw this.handleGlitch(`Failed to paste to element with the CSS Selectors or XPath '${selectors}'${index === -1 ? '' : `[${index}]`}.\n${glitch}`) }
+		} catch (glitch) { throw await this.handleGlitch(`Failed to paste to element with the CSS Selectors or XPath '${selectors}'${index === -1 ? '' : `[${index}]`}.\n${glitch}`) }
 	}
 
 	/**
@@ -616,13 +616,13 @@ export default class Page {
 						)
 					}
 					const element = index === -1 ? (
-						selectors.match(/^(\/|\.\/)/) ? (
+						selectors.match(/^(\/|\.\/|\()/) ? (
 							document.evaluate(selectors, document.documentElement, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue
 						) : (
 							document.querySelector(selectors) as any
 						)
 					) : (
-						selectors.match(/^(\/|\.\/)/) ? (
+						selectors.match(/^(\/|\.\/|\()/) ? (
 							document.evaluate(selectors, document.documentElement, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null).snapshotItem(index)
 						) : (
 							document.querySelectorAll(selectors)[index] as any
@@ -636,7 +636,7 @@ export default class Page {
 				},
 				args: [selectors, type, index, this.configurations]
 			})) throw new Error('No element(s) found for the given CSS Selectors or XPath.')
-		} catch (glitch) { throw this.handleGlitch(`Failed to trigger event '${type}' on element with the CSS Selectors or XPath '${selectors}'${index === -1 ? '' : `[${index}]`}.\n${glitch}`) }
+		} catch (glitch) { throw await this.handleGlitch(`Failed to trigger event '${type}' on element with the CSS Selectors or XPath '${selectors}'${index === -1 ? '' : `[${index}]`}.\n${glitch}`) }
 	}
 
 	/**
@@ -671,13 +671,13 @@ export default class Page {
 						triggerEvent(element, 'blur')
 					}
 					const element = index === -1 ? (
-						selectors.match(/^(\/|\.\/)/) ? (
+						selectors.match(/^(\/|\.\/|\()/) ? (
 							document.evaluate(selectors, document.documentElement, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue
 						) : (
 							document.querySelector(selectors) as any
 						)
 					) : (
-						selectors.match(/^(\/|\.\/)/) ? (
+						selectors.match(/^(\/|\.\/|\()/) ? (
 							document.evaluate(selectors, document.documentElement, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null).snapshotItem(index)
 						) : (
 							document.querySelectorAll(selectors)[index] as any
@@ -691,7 +691,7 @@ export default class Page {
 				},
 				args: [selectors, value, index, this.configurations]
 			})) throw new Error('No element(s) found for the given CSS Selectors or XPath.')
-		} catch (glitch) { throw this.handleGlitch(`Failed to input value '${value}' into element with the CSS Selectors or XPath '${selectors}'${index === -1 ? '' : `[${index}]`}.\n${glitch}`) }
+		} catch (glitch) { throw await this.handleGlitch(`Failed to input value '${value}' into element with the CSS Selectors or XPath '${selectors}'${index === -1 ? '' : `[${index}]`}.\n${glitch}`) }
 	}
 
 	/**
@@ -781,7 +781,7 @@ export default class Page {
 						return new File([blob], name, { type: blob.type })
 					}
 					// Upload file
-					const element = selectors ? (selectors.match(/^(\/|\.\/)/) ? document.evaluate(selectors, document.documentElement, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue : document.querySelector(selectors)) : window.elementCatcher.elements[caughtElementIndex]
+					const element = selectors ? (selectors.match(/^(\/|\.\/|\()/) ? document.evaluate(selectors, document.documentElement, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue : document.querySelector(selectors)) : window.elementCatcher.elements[caughtElementIndex]
 					if (element) {
 						scrollToElementBeforeAction && element.scrollIntoView(scrollIntoViewOptions)
 						element.files = filesToFileList((await Promise.all(window.transmittedFiles[filesIndex].map(async ({ blobUrl, dataUrl, name }: any) => (blobUrl ? blobToFile((await getBlob(blobUrl)) as any, name) : dataUrlToFile(dataUrl, name))))) as any)
@@ -799,7 +799,7 @@ export default class Page {
 
 			// Revoke all blob urls to remove references
 			files.forEach(({ blobUrl }: any) => URL.revokeObjectURL(blobUrl))
-		} catch (glitch) { throw this.handleGlitch(`Failed to upload files.\n${glitch}`) }
+		} catch (glitch) { throw await this.handleGlitch(`Failed to upload files.\n${glitch}`) }
 	}
 
 	/**
@@ -817,7 +817,7 @@ export default class Page {
 				dataUrl = (await blobToDataUrl(await (croppedImage as any).convertToBlob())) as string
 			}
 			return dataUrl
-		} catch (glitch) { throw this.handleGlitch(`Failed to take a screenshot.\n${glitch}`) }
+		} catch (glitch) { throw await this.handleGlitch(`Failed to take a screenshot.\n${glitch}`) }
 	}
 
 	elementCatcher = {

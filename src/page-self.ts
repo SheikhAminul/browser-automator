@@ -231,13 +231,13 @@ const selfAutomator = (global = true) => {
 		static async elementExists(selectors: string, index: number = -1): Promise<boolean> {
 			try {
 				const element = index === -1 ? (
-					selectors.match(/^(\/|\.\/)/) ? (
+					selectors.match(/^(\/|\.\/|\()/) ? (
 						document.evaluate(selectors, document.documentElement, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue
 					) : (
 						document.querySelector(selectors) as any
 					)
 				) : (
-					selectors.match(/^(\/|\.\/)/) ? (
+					selectors.match(/^(\/|\.\/|\()/) ? (
 						document.evaluate(selectors, document.documentElement, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null).snapshotItem(index)
 					) : (
 						document.querySelectorAll(selectors)[index] as any
@@ -278,13 +278,13 @@ const selfAutomator = (global = true) => {
 
 				if (!element) {
 					element = index === -1 ? (
-						selectors.match(/^(\/|\.\/)/) ? (
+						selectors.match(/^(\/|\.\/|\()/) ? (
 							document.evaluate(selectors, document.documentElement, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue
 						) : (
 							document.querySelector(selectors) as any
 						)
 					) : (
-						selectors.match(/^(\/|\.\/)/) ? (
+						selectors.match(/^(\/|\.\/|\()/) ? (
 							document.evaluate(selectors, document.documentElement, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null).snapshotItem(index)
 						) : (
 							document.querySelectorAll(selectors)[index] as any
@@ -343,13 +343,13 @@ const selfAutomator = (global = true) => {
 				const { scrollToElementBeforeAction, scrollIntoViewOptions }: Pick<PageConfigurations, 'scrollIntoViewOptions' | 'scrollToElementBeforeAction'> = this.configurations
 				if (!element) {
 					element = index === -1 ? (
-						selectors.match(/^(\/|\.\/)/) ? (
+						selectors.match(/^(\/|\.\/|\()/) ? (
 							document.evaluate(selectors, document.documentElement, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue
 						) : (
 							document.querySelector(selectors) as any
 						)
 					) : (
-						selectors.match(/^(\/|\.\/)/) ? (
+						selectors.match(/^(\/|\.\/|\()/) ? (
 							document.evaluate(selectors, document.documentElement, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null).snapshotItem(index)
 						) : (
 							document.querySelectorAll(selectors)[index] as any
@@ -399,13 +399,13 @@ const selfAutomator = (global = true) => {
 
 				if (!element) {
 					element = index === -1 ? (
-						selectors.match(/^(\/|\.\/)/) ? (
+						selectors.match(/^(\/|\.\/|\()/) ? (
 							document.evaluate(selectors, document.documentElement, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue
 						) : (
 							document.querySelector(selectors) as any
 						)
 					) : (
-						selectors.match(/^(\/|\.\/)/) ? (
+						selectors.match(/^(\/|\.\/|\()/) ? (
 							document.evaluate(selectors, document.documentElement, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null).snapshotItem(index)
 						) : (
 							document.querySelectorAll(selectors)[index] as any
@@ -453,13 +453,13 @@ const selfAutomator = (global = true) => {
 
 				if (!element) {
 					element = index === -1 ? (
-						selectors.match(/^(\/|\.\/)/) ? (
+						selectors.match(/^(\/|\.\/|\()/) ? (
 							document.evaluate(selectors, document.documentElement, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue
 						) : (
 							document.querySelector(selectors) as any
 						)
 					) : (
-						selectors.match(/^(\/|\.\/)/) ? (
+						selectors.match(/^(\/|\.\/|\()/) ? (
 							document.evaluate(selectors, document.documentElement, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null).snapshotItem(index)
 						) : (
 							document.querySelectorAll(selectors)[index] as any
@@ -507,13 +507,13 @@ const selfAutomator = (global = true) => {
 
 				if (!element) {
 					element = index === -1 ? (
-						selectors.match(/^(\/|\.\/)/) ? (
+						selectors.match(/^(\/|\.\/|\()/) ? (
 							document.evaluate(selectors, document.documentElement, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue
 						) : (
 							document.querySelector(selectors) as any
 						)
 					) : (
-						selectors.match(/^(\/|\.\/)/) ? (
+						selectors.match(/^(\/|\.\/|\()/) ? (
 							document.evaluate(selectors, document.documentElement, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null).snapshotItem(index)
 						) : (
 							document.querySelectorAll(selectors)[index] as any
