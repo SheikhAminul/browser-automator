@@ -224,7 +224,7 @@ Represents a Page instance for interacting with Chrome browser pages.
 
   - `text` (string) - The text to copy to the clipboard.
 
-* #### `execPasteTo(selectors: string, index: number = -1): Promise<void>`
+* #### `execPaste(selectors: string, index: number = -1): Promise<void>`
 
   Pastes text from the clipboard to an element specified by the CSS selector or XPath expression.
 

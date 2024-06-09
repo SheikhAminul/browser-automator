@@ -1,3 +1,4 @@
+import RemoteElement from './element'
 import { blobToDataUrl, chooseProperties, cropImageOffscreen, doDelay, imageBitmapFromUrl } from './library'
 import Self, { selfIntegration } from './self'
 
@@ -70,7 +71,7 @@ export default class Page {
 	 * @param {Object} configurations - An object represents configurations for the Page instance.
 	 * @param {number} [configurations.tryLimit] - The maximum number of attempts for waiting operations.
 	 * @param {number} [configurations.delay] - The delay between attempts in milliseconds.
-	 * @param {boolean} [configurations.scrollToElementBeforeAction] - Scroll to the element before an action (`click`, `execPasteTo`, `triggerEvent`, `input`, `uploadFiles`). 
+	 * @param {boolean} [configurations.scrollToElementBeforeAction] - Scroll to the element before an action (`click`, `execPaste`, `triggerEvent`, `input`, `uploadFiles`). 
 	 * @param {Object} [configurations.scrollIntoViewOptions] - Options for the `scrollIntoView` method to scroll to elements.
 	 */
 	configure(configurations: Partial<PageConfigurations>): void {
@@ -438,6 +439,59 @@ export default class Page {
 				options
 			)
 		} catch (glitch) { throw await this.handleGlitch(`Glitch while waiting for the XPath '${selectors}'${index === -1 ? '' : `[${index}]`} to be missing.\n${glitch}`) }
+	}
+
+	/**
+	 * Gets element as RemoteElement for the given XPath expression or CSS Selectors. It doesn't check if the existance of the element.
+	 * @param {string} selectors - The CSS selector or XPath expression.
+	 * @param {number} index - The index of the element to check.
+	 * @returns {RemoteElement}
+	 */
+	element(selectors: string, index: number = -1) {
+		const elementPath = `${selectors}⟮${index}⟯`
+		return new RemoteElement(this, elementPath)
+	}
+
+	/**
+	 * Gets element as RemoteElement matching the given XPath expression or CSS Selectors.
+	 * 
+	 * @param {string} selectors - The CSS selector or XPath expression.
+	 * @param {number} index - The index of the element to check.
+	 * @returns {Promise<RemoteElement>}
+	 */
+	async getElement(selectors: string, index: number = -1, context?: string) {
+		const elementPath = `${context ? `${context}→${selectors}` : selectors}⟮${index}⟯`
+		const { tagName } = await this.evaluate({
+			func: (elementPath) => {
+				const element = window.Self.ElementActions.getElement(elementPath)
+				return element ? { tagName: element.tagName } : {}
+			},
+			args: [elementPath]
+		})
+		if (tagName) return new RemoteElement(this, elementPath, tagName)
+	}
+
+	/**
+	 * Gets all the elements as RemoteElement[] matching the given XPath expression or CSS Selectors.
+	 * 
+	 * @param {string} selectors - The CSS selector or XPath expression.
+	 * @returns {Promise<RemoteElement[]>}
+	 */
+	async getElements(selectors: string, context?: string) {
+		const elements = await this.evaluate({
+			func: (selectors, context) => {
+				const contextElement = context ? window.Self.ElementActions.getElement(context) : document
+				if (contextElement) {
+					const elements = window.Self.getElements(selectors, contextElement)
+					return elements.map(({ tagName }, index) => ({
+						tagName,
+						elementPath: context ? `${context}→${selectors}⟮${index}⟯` : `${selectors}⟮${index}⟯`
+					}))
+				}
+			},
+			args: [selectors, context]
+		})
+		return elements?.map(({ tagName, elementPath }) => new RemoteElement(this, elementPath, tagName))
 	}
 
 	/**

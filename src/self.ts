@@ -12,7 +12,7 @@ interface PageConfigurations {
 }
 
 const selfIntegration = (global = true) => {
-	const triggerEvent = (element: any, type: string) => {
+	const triggerEvent = (element: any, type: 'click' | 'input' | 'submit' | 'keydown' | 'keyup' | 'keypress' | 'change' | 'mouseover' | 'mouseout' | 'focus' | 'blur' | 'load' | string) => {
 		element.dispatchEvent(
 			new Event(type, {
 				bubbles: true,
@@ -31,6 +31,12 @@ const selfIntegration = (global = true) => {
 		triggerEvent(element, 'input')
 		triggerEvent(element, 'change')
 		triggerEvent(element, 'blur')
+	}
+
+	const triggerPaste = (element: any) => {
+		element.focus()
+		if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') element.select()
+		document.execCommand('paste')
 	}
 
 	const filesToFileList = (files: FileList) => {
@@ -130,9 +136,7 @@ const selfIntegration = (global = true) => {
 		const element = getElement(selectors, document, index) as any
 		if (element) {
 			scrollToElementBeforeAction && element.scrollIntoView(scrollIntoViewOptions)
-			element.focus()
-			if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') element.select()
-			document.execCommand('paste')
+			triggerPaste(element)
 			return true
 		} else return false
 	}
@@ -204,12 +208,43 @@ const selfIntegration = (global = true) => {
 		}
 	}
 
+	class ElementActions {
+		static elements = new Map()
+		static getElement(elementPath: string) {
+			let element = this.elements.get(elementPath)
+			if (element) return element
+			for (const path of elementPath.split('→')) {
+				let [, selectors, index] = path.match(/(.+)⟮([0-9-]+)⟯$/) as any
+				index = Number(index)
+				element = getElement(selectors, element || document, index)
+			}
+			if (element) {
+				if (this.elements.size > 50) this.elements.delete(this.elements.keys().next().value)
+				this.elements.set(elementPath, element)
+				return element
+			}
+		}
+		static handleCall(elementPath: string, key: string, args?: any[]) {
+			const element = this.getElement(elementPath)
+			return args ? element?.[key](...args) : element?.[key]()
+		}
+		static handleGet(elementPath: string, key: string) {
+			const element = this.getElement(elementPath)
+			return element?.[key]
+		}
+		static handleSet(elementPath: string, key: string, value: any) {
+			const element = this.getElement(elementPath)
+			element[key] = value
+		}
+	}
+
 	/**
 	* Exportables.
 	*/
 	const Self = {
 		exists: () => true,
-		getElement, getElements, getElementBySelectors, getElementsBySelectors, getElementByXPath, getElementsByXPath, triggerEvent, setValue, isXPath, filesToFileList, getBlob, dataUrlToFile, blobToFile,
+		ElementActions,
+		getElement, getElements, getElementBySelectors, getElementsBySelectors, getElementByXPath, getElementsByXPath, triggerEvent, triggerPaste, setValue, isXPath, filesToFileList, getBlob, dataUrlToFile, blobToFile,
 		click, elementExists, execPasteTo, input, elementCatcher, manualClick
 	}
 	if (global && !window.Self?.exists?.()) window.Self = Self
