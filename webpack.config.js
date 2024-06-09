@@ -5,7 +5,7 @@ module.exports = {
 	entry: {
 		'index': './src/index.ts',
 		'library': './src/library.ts',
-		'page-self': './src/page-self.ts',
+		'self': './src/self.ts',
 		'browser': './src/browser.ts',
 		'page': './src/page.ts'
 	},

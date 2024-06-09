@@ -7,7 +7,7 @@
 import Browser from './browser'
 import { doDelay } from './library'
 import Page from './page'
-import Self, { selfAutomator } from './page-self'
+import Self from './self'
 
 /**
  * A namespace that provides functions for launching the browser automation process.
@@ -27,4 +27,4 @@ const automator = {
 }
 
 export default automator
-export { Browser, Page, Self, selfAutomator, doDelay as delay }
+export { Browser, Page, doDelay as delay, Self }

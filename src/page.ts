@@ -1,9 +1,9 @@
 import { blobToDataUrl, chooseProperties, cropImageOffscreen, doDelay, imageBitmapFromUrl } from './library'
+import Self, { selfIntegration } from './self'
 
 declare global {
 	interface Window {
-		elementCatcher: any
-		manualClickPreventer: any
+		Self: typeof Self
 		transmittedFiles: any
 	}
 }
@@ -97,7 +97,6 @@ export default class Page {
 
 		this.elementCatcher.catch = this.elementCatcher.catch.bind(this)
 		this.elementCatcher.terminate = this.elementCatcher.terminate.bind(this)
-		this.elementCatcher.clear = this.elementCatcher.clear.bind(this)
 
 		this.manualClick.enable = this.manualClick.enable.bind(this)
 		this.manualClick.disable = this.manualClick.disable.bind(this)
@@ -378,42 +377,13 @@ export default class Page {
 				async (options: any) => this.evaluate(options),
 				[
 					{
-						func: (selectors: string, index: any) => (
-							(index === -1 ? document.querySelector(selectors) : document.querySelectorAll(selectors)[index]) ? true : false
-						),
+						func: (selectors: string, index: any) => window.Self.getElementBySelectors(selectors, document, index) ? true : false,
 						args: [selectors, index]
 					}
 				],
 				options
 			)
 		} catch (glitch) { throw await this.handleGlitch(`Glitch while waiting for the CSS Selectors '${selectors}'${index === -1 ? '' : `[${index}]`}.\n${glitch}`) }
-	}
-
-	/**
-	 * Waits for an element matching the given CSS selector to disappear from the page.
-	 * 
-	 * @param {string} selectors - The CSS selector to check for element absence.
-	 * @param {Object} [options] - Optional options for waiting.
-	 * @param {number} [options.tryLimit] - The maximum number of attempts (default is 1000).
-	 * @param {number} [options.delay] - The delay in milliseconds between attempts (default is 750ms).
-	 * @param {number} [index = -1] - The index of the element if there are multiple matches.
-	 * @returns {Promise<void>}
-	 */
-	async waitForSelectorMiss(selectors: string, options: { tryLimit?: number; delay?: number } = {}, index: number = -1): Promise<void> {
-		try {
-			await this.waitFor(
-				async (options: any) => this.evaluate(options),
-				[
-					{
-						func: (selectors: string, index: any) => (
-							(index === -1 ? document.querySelector(selectors) : document.querySelectorAll(selectors)[index]) ? false : true
-						),
-						args: [selectors, index]
-					}
-				],
-				options
-			)
-		} catch (glitch) { throw await this.handleGlitch(`Glitch while waiting for the CSS Selectors '${selectors}'${index === -1 ? '' : `[${index}]`} to be missing.\n${glitch}`) }
 	}
 
 	/**
@@ -432,13 +402,7 @@ export default class Page {
 				async (options: any) => this.evaluate(options),
 				[
 					{
-						func: (expression: string, index: any) => (
-							index === -1 ? (
-								document.evaluate(expression, document.documentElement, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue ? true : false
-							) : (
-								document.evaluate(expression, document.documentElement, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null).snapshotItem(index) ? true : false
-							)
-						),
+						func: (expression: string, index: any) => window.Self.getElementByXPath(expression, document, index) ? true : false,
 						args: [expression, index]
 					}
 				],
@@ -448,7 +412,7 @@ export default class Page {
 	}
 
 	/**
-	 * Waits for an element matching the given XPath expression to disappear from the page.
+	 * Waits for an element matching the given XPath expression or CSS Selectors to disappear from the page.
 	 * 
 	 * @param {string} selectors - The CSS XPath expression to check for element absence.
 	 * @param {Object} [options] - Optional options for waiting.
@@ -457,25 +421,23 @@ export default class Page {
 	 * @param {number} [index = -1] - The index of the element if there are multiple matches.
 	 * @returns {Promise<void>}
 	 */
-	async waitForXPathMiss(expression: string, options: { tryLimit?: number; delay?: number } = {}, index: number = -1): Promise<void> {
+	async waitForElementMiss(selectors: string, options: { tryLimit?: number; delay?: number } = {}, index: number = -1): Promise<void> {
 		try {
 			await this.waitFor(
 				async (options: any) => this.evaluate(options),
 				[
 					{
-						func: (expression: string, index: number) => (
-							index === -1 ? (
-								document.evaluate(expression, document.documentElement, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue ? false : true
-							) : (
-								document.evaluate(expression, document.documentElement, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null).snapshotItem(index) ? false : true
-							)
+						func: Self.isXPath(selectors) ? (
+							(selectors: string, index: number) => window.Self.getElementByXPath(selectors, document, index) ? false : true
+						) : (
+							(selectors: string, index: number) => window.Self.getElementBySelectors(selectors, document, index) ? false : true
 						),
-						args: [expression, index]
+						args: [selectors, index]
 					}
 				],
 				options
 			)
-		} catch (glitch) { throw await this.handleGlitch(`Glitch while waiting for the XPath '${expression}'${index === -1 ? '' : `[${index}]`} to be missing.\n${glitch}`) }
+		} catch (glitch) { throw await this.handleGlitch(`Glitch while waiting for the XPath '${selectors}'${index === -1 ? '' : `[${index}]`} to be missing.\n${glitch}`) }
 	}
 
 	/**
@@ -488,22 +450,7 @@ export default class Page {
 	async elementExists(selectors: string, index: number = -1): Promise<boolean> {
 		try {
 			return await this.evaluate({
-				func: (selectors: string, index: number) => {
-					const element = index === -1 ? (
-						selectors.match(/^(\/|\.\/|\()/) ? (
-							document.evaluate(selectors, document.documentElement, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue
-						) : (
-							document.querySelector(selectors) as any
-						)
-					) : (
-						selectors.match(/^(\/|\.\/|\()/) ? (
-							document.evaluate(selectors, document.documentElement, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null).snapshotItem(index)
-						) : (
-							document.querySelectorAll(selectors)[index] as any
-						)
-					)
-					return element ? true : false
-				},
+				func: (selectors: string, index: number) => window.Self.getElement(selectors, document, index) ? true : false,
 				args: [selectors, index]
 			})
 		} catch (glitch) { throw await this.handleGlitch(`Glitch while checking if element with the CSS Selectors or XPath '${selectors}'${index === -1 ? '' : `[${index}]`} exists.\n${glitch}`) }
@@ -519,26 +466,7 @@ export default class Page {
 	async click(selectors: string, index: number = -1): Promise<void> {
 		try {
 			if (!await this.evaluate({
-				func: (selectors: string, index: any, { scrollToElementBeforeAction, scrollIntoViewOptions }: Pick<PageConfigurations, 'scrollIntoViewOptions' | 'scrollToElementBeforeAction'>) => {
-					const element = index === -1 ? (
-						selectors.match(/^(\/|\.\/|\()/) ? (
-							document.evaluate(selectors, document.documentElement, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue
-						) : (
-							document.querySelector(selectors) as any
-						)
-					) : (
-						selectors.match(/^(\/|\.\/|\()/) ? (
-							document.evaluate(selectors, document.documentElement, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null).snapshotItem(index)
-						) : (
-							document.querySelectorAll(selectors)[index] as any
-						)
-					)
-					if (element) {
-						scrollToElementBeforeAction && element.scrollIntoView(scrollIntoViewOptions)
-						element.click()
-						return true
-					} else return false
-				},
+				func: (selectors: string, index: any, configurations: Pick<PageConfigurations, 'scrollIntoViewOptions' | 'scrollToElementBeforeAction'>) => window.Self.click(selectors, index, configurations),
 				args: [selectors, index, this.configurations]
 			})) throw new Error('No element(s) found for the given CSS Selectors or XPath.')
 		} catch (glitch) { throw await this.handleGlitch(`Failed to click on element with the CSS Selectors or XPath '${selectors}'${index === -1 ? '' : `[${index}]`}.\n${glitch}`) }
@@ -568,28 +496,7 @@ export default class Page {
 	async execPasteTo(selectors: string, index: number = -1): Promise<void> {
 		try {
 			if (!await this.evaluate({
-				func: (selectors: string, index: number, { scrollToElementBeforeAction, scrollIntoViewOptions }: Pick<PageConfigurations, 'scrollIntoViewOptions' | 'scrollToElementBeforeAction'>) => {
-					const element = index === -1 ? (
-						selectors.match(/^(\/|\.\/|\()/) ? (
-							document.evaluate(selectors, document.documentElement, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue
-						) : (
-							document.querySelector(selectors) as any
-						)
-					) : (
-						selectors.match(/^(\/|\.\/|\()/) ? (
-							document.evaluate(selectors, document.documentElement, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null).snapshotItem(index)
-						) : (
-							document.querySelectorAll(selectors)[index] as any
-						)
-					)
-					if (element) {
-						scrollToElementBeforeAction && element.scrollIntoView(scrollIntoViewOptions)
-						element.focus()
-						if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') element.select()
-						document.execCommand('paste')
-						return true
-					} else return false
-				},
+				func: (selectors: string, index: number, configurations: Pick<PageConfigurations, 'scrollIntoViewOptions' | 'scrollToElementBeforeAction'>) => window.Self.execPasteTo(selectors, index, configurations),
 				args: [selectors, index, this.configurations]
 			})) throw new Error('No element(s) found for the given CSS Selectors or XPath.')
 		} catch (glitch) { throw await this.handleGlitch(`Failed to paste to element with the CSS Selectors or XPath '${selectors}'${index === -1 ? '' : `[${index}]`}.\n${glitch}`) }
@@ -607,30 +514,10 @@ export default class Page {
 		try {
 			if (!await this.evaluate({
 				func: (selectors: string, type: any, index: number, { scrollToElementBeforeAction, scrollIntoViewOptions }: Pick<PageConfigurations, 'scrollIntoViewOptions' | 'scrollToElementBeforeAction'>) => {
-					function triggerEvent(element: any, type: string) {
-						element.dispatchEvent(
-							new Event(type, {
-								bubbles: true,
-								cancelable: true
-							})
-						)
-					}
-					const element = index === -1 ? (
-						selectors.match(/^(\/|\.\/|\()/) ? (
-							document.evaluate(selectors, document.documentElement, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue
-						) : (
-							document.querySelector(selectors) as any
-						)
-					) : (
-						selectors.match(/^(\/|\.\/|\()/) ? (
-							document.evaluate(selectors, document.documentElement, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null).snapshotItem(index)
-						) : (
-							document.querySelectorAll(selectors)[index] as any
-						)
-					)
+					const element = window.Self.getElement(selectors, document, index)
 					if (element) {
 						scrollToElementBeforeAction && element.scrollIntoView(scrollIntoViewOptions)
-						triggerEvent(element, type)
+						window.Self.triggerEvent(element, type)
 						return true
 					} else return false
 				},
@@ -650,45 +537,7 @@ export default class Page {
 	async input(selectors: string, value: any, index: number = -1): Promise<void> {
 		try {
 			if (!await this.evaluate({
-				func: (selectors: string, value: any, index: number, { scrollToElementBeforeAction, scrollIntoViewOptions }: Pick<PageConfigurations, 'scrollIntoViewOptions' | 'scrollToElementBeforeAction'>) => {
-					function triggerEvent(element: any, type: string) {
-						element.dispatchEvent(
-							new Event(type, {
-								bubbles: true,
-								cancelable: true
-							})
-						)
-					}
-					function setValue(element: { tagName: string; value: any; innerHTML: any }, value: any) {
-						if (element.tagName.match(/INPUT|TEXTAREA|SELECT/i)) element.value = value
-						else element.innerHTML = value
-						triggerEvent(element, 'focus')
-						triggerEvent(element, 'keydown')
-						triggerEvent(element, 'keypress')
-						triggerEvent(element, 'keyup')
-						triggerEvent(element, 'input')
-						triggerEvent(element, 'change')
-						triggerEvent(element, 'blur')
-					}
-					const element = index === -1 ? (
-						selectors.match(/^(\/|\.\/|\()/) ? (
-							document.evaluate(selectors, document.documentElement, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue
-						) : (
-							document.querySelector(selectors) as any
-						)
-					) : (
-						selectors.match(/^(\/|\.\/|\()/) ? (
-							document.evaluate(selectors, document.documentElement, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null).snapshotItem(index)
-						) : (
-							document.querySelectorAll(selectors)[index] as any
-						)
-					)
-					if (element) {
-						scrollToElementBeforeAction && element.scrollIntoView(scrollIntoViewOptions)
-						setValue(element, value)
-						return true
-					} else return false
-				},
+				func: (selectors: string, value: any, index: number, configurations: Pick<PageConfigurations, 'scrollIntoViewOptions' | 'scrollToElementBeforeAction'>) => window.Self.input(selectors, value, index, configurations),
 				args: [selectors, value, index, this.configurations]
 			})) throw new Error('No element(s) found for the given CSS Selectors or XPath.')
 		} catch (glitch) { throw await this.handleGlitch(`Failed to input value '${value}' into element with the CSS Selectors or XPath '${selectors}'${index === -1 ? '' : `[${index}]`}.\n${glitch}`) }
@@ -746,47 +595,13 @@ export default class Page {
 			// Upload the file
 			await this.evaluate(
 				async (filesIndex: number, selectors: string, caughtElementIndex: number = -1, { scrollToElementBeforeAction, scrollIntoViewOptions }: Pick<PageConfigurations, 'scrollIntoViewOptions' | 'scrollToElementBeforeAction'>) => {
-					function filesToFileList(files: FileList) {
-						const dataTransferer = new DataTransfer()
-						for (const file of files) dataTransferer.items.add(file)
-						return dataTransferer.files
-					}
-					function dataUrlToFile(dataUrl: string, name: string) {
-						let [mime, data] = dataUrl.split(',')
-						mime = (<any>mime).match(/:(.*?);/)[1]
-						data = atob(data)
-						let index = data.length,
-							dataArray = new Uint8Array(index)
-						while (index--) dataArray[index] = data.charCodeAt(index)
-						return new File([dataArray], name, { type: mime })
-					}
-					function triggerEvent(element: any, type: string) {
-						element.dispatchEvent(
-							new Event(type, {
-								bubbles: true,
-								cancelable: true
-							})
-						)
-					}
-					function getBlob(url: string) {
-						return new Promise(resolution => {
-							var xhr = new XMLHttpRequest()
-							xhr.open('GET', url, true)
-							xhr.responseType = 'blob'
-							xhr.onload = () => resolution(xhr.response)
-							xhr.send()
-						})
-					}
-					function blobToFile(blob: Blob, name: string) {
-						return new File([blob], name, { type: blob.type })
-					}
 					// Upload file
-					const element = selectors ? (selectors.match(/^(\/|\.\/|\()/) ? document.evaluate(selectors, document.documentElement, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue : document.querySelector(selectors)) : window.elementCatcher.elements[caughtElementIndex]
+					const element = selectors ? (selectors.match(/^(\/|\.\/|\()/) ? document.evaluate(selectors, document.documentElement, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue : document.querySelector(selectors)) : window.Self.elementCatcher.current?.elements[caughtElementIndex] as any
 					if (element) {
 						scrollToElementBeforeAction && element.scrollIntoView(scrollIntoViewOptions)
-						element.files = filesToFileList((await Promise.all(window.transmittedFiles[filesIndex].map(async ({ blobUrl, dataUrl, name }: any) => (blobUrl ? blobToFile((await getBlob(blobUrl)) as any, name) : dataUrlToFile(dataUrl, name))))) as any)
-						triggerEvent(element, 'input')
-						triggerEvent(element, 'change')
+						element.files = window.Self.filesToFileList((await Promise.all(window.transmittedFiles[filesIndex].map(async ({ blobUrl, dataUrl, name }: any) => (blobUrl ? window.Self.blobToFile((await window.Self.getBlob(blobUrl)) as any, name) : window.Self.dataUrlToFile(dataUrl, name))))) as any)
+						window.Self.triggerEvent(element, 'input')
+						window.Self.triggerEvent(element, 'change')
 						// Clear transmitted data
 						delete window.transmittedFiles[filesIndex]
 						if (window.transmittedFiles.filter(Boolean).length === 0) delete window.transmittedFiles
@@ -824,29 +639,25 @@ export default class Page {
 		/**
 		 * Enables element catching for elements with the specified tag name. Some websites create dynamic elements and hide elements from the page to prevent automated tasks such as automated file upload, etc. It logs those elements to interact with them.
 		 *
-		 * @param {any} tagName - The tag name of the elements to catch.
+		 * @param {string[]} tagNames - The tag names of the elements to catch.
 		 */
-		catch: async function (tagName: any): Promise<void> {
+		catch: async function (tagNames: string[]): Promise<void> {
 			try {
-				await this.evaluate({
+				if (!await (this as any).evaluate({
 					world: 'MAIN',
-					func: (tagName: string) => {
-						if (!window.elementCatcher) {
-							window.elementCatcher = {
-								originalFunc: document.createElement,
-								elements: [],
-								tagName: tagName.toUpperCase()
-							}
-							document.createElement = function () {
-								const element = window.elementCatcher.originalFunc.apply(this, arguments)
-								if (element.tagName === window.elementCatcher.tagName) window.elementCatcher.elements.push(element)
-								return element
-							}
-						}
-					},
-					args: [tagName]
+					func: () => window.Self?.exists()
+				})) await (this as any).evaluate({
+					world: 'MAIN',
+					func: selfIntegration
 				})
-			} catch (glitch) { throw glitch }
+				await (this as any).evaluate({
+					world: 'MAIN',
+					func: (tagNames: string[]) => window.Self.elementCatcher.catch(tagNames),
+					args: [tagNames]
+				})
+			} catch (glitch) {
+				throw glitch
+			}
 		},
 
 		/**
@@ -854,36 +665,18 @@ export default class Page {
 		 */
 		terminate: async function (): Promise<void> {
 			try {
-				await this.evaluate({
+				await (this as any).evaluate({
 					world: 'MAIN',
-					func: () => {
-						if (window.elementCatcher) {
-							document.createElement = window.elementCatcher.originalFunc
-							delete window.elementCatcher.originalFunc
-							delete window.elementCatcher.tagName
-						}
-					}
+					func: () => window.Self?.elementCatcher.terminate()
 				})
-			} catch (glitch) { throw glitch }
-		},
-
-		/**
-		 * Clears the element catcher, restoring the original createElement function.
-		 */
-		clear: async function (): Promise<void> {
-			try {
-				await this.evaluate({
-					world: 'MAIN',
-					func: () => {
-						if (window.elementCatcher) {
-							if (window.elementCatcher.originalFunc) document.createElement = window.elementCatcher.originalFunc
-							delete window.elementCatcher
-						}
-					}
-				})
-			} catch (glitch) { throw glitch }
+			} catch (glitch) {
+				throw glitch
+			}
 		}
-	} as any
+	} as {
+		catch: (tagNames: string[]) => Promise<void>,
+		terminate: () => Promise<void>
+	}
 
 	manualClick = {
 		/**
@@ -891,32 +684,23 @@ export default class Page {
 		 */
 		enable: async function (): Promise<void> {
 			try {
-				await this.evaluate({
-					func: () => {
-						if (window.manualClickPreventer) {
-							window.manualClickPreventer.remove()
-							delete window.manualClickPreventer
-						}
-					}
-				})
-			} catch (glitch) { throw glitch }
+				await (this as any).evaluate(() => window.Self.manualClick.enable())
+			} catch (glitch) {
+				throw glitch
+			}
 		},
 		/**
 		 * Disables manual clicks on the page.
 		 */
 		disable: async function (): Promise<void> {
 			try {
-				await this.evaluate({
-					func: () => {
-						if (!window.manualClickPreventer) {
-							window.manualClickPreventer = document.createElement('div')
-							window.manualClickPreventer.style = 'width: 100%; height: 100%; position: fixed; top: 0; cursor: not-allowed; z-index: 12500; left: 0;'
-							window.manualClickPreventer.addEventListener('contextmenu', (event: { preventDefault: () => any }) => event.preventDefault())
-							document.body.appendChild(window.manualClickPreventer)
-						}
-					}
-				})
-			} catch (glitch) { throw glitch }
+				await (this as any).evaluate(() => window.Self.manualClick.disable())
+			} catch (glitch) {
+				throw glitch
+			}
 		}
-	} as any
+	} as {
+		enable: () => Promise<void>
+		disable: () => Promise<void>
+	}
 }

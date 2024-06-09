@@ -1,4 +1,5 @@
 import Page from './page'
+import { selfIntegration } from './self'
 
 /**
  * Represents a Browser instance for interacting with Chrome browser pages.
@@ -10,41 +11,15 @@ export default class Browser {
 	availablePages: Page[] = []
 
 	/**
-	 * A callback function that is invoked when a new page is added to the browser.
-	 */
-	onPageAdded?: Function
-
-	/**
-	 * A function to listen for page close events.
-	 */
-	onPageCloseListener: Function
-
-	/**
 	 * Creates a new Browser instance.
 	 */
 	constructor() {
-		onbeforeunload = this.beforeUnloadListener
-		this.onPageCloseListener = this.onPageClose.bind(this)
-		chrome.tabs.onRemoved.addListener(this.onPageCloseListener as any)
-	}
-
-	/**
-	 * Event listener for the 'beforeunload' event to close the browser gracefully.
-	 * @param event - The 'beforeunload' event.
-	 */
-	beforeUnloadListener = (event: Event) => {
-		event.preventDefault()
-		this.close()
-		return false
-	}
-
-	/**
-	 * Event listener for page close events.
-	 * @param closedTabId - The ID of the closed tab.
-	 */
-	onPageClose(closedTabId: number) {
-		const index = this.availablePages.findIndex(({ tabId }) => tabId === closedTabId)
-		if (index !== -1) this.availablePages.splice(index, 1)
+		onbeforeunload = (event: Event) => {
+			event.preventDefault()
+			this.close()
+			return false
+		}
+		this.syncListeners()
 	}
 
 	/**
@@ -61,7 +36,6 @@ export default class Browser {
 	async close() {
 		try {
 			onbeforeunload = null
-			chrome.tabs.onRemoved.removeListener(this.onPageCloseListener as any)
 			await Promise.all(
 				this.availablePages.map(async (page: any) => {
 					const { tabId, originWindowId, activeInOrigin, onBeforeClose } = page
@@ -79,6 +53,7 @@ export default class Browser {
 				})
 			)
 			this.availablePages = []
+			this.syncListeners()
 		} catch (glitch) { throw glitch }
 	}
 
@@ -141,7 +116,54 @@ export default class Browser {
 			} as any)
 			this.availablePages.push(page)
 			this?.onPageAdded?.(page)
+			this.syncListeners()
 			return page
 		} catch (glitch) { throw glitch }
+	}
+
+	/**
+	 * A callback function that is invoked when a new page is added to the browser.
+	 */
+	onPageAdded?: Function
+
+	/**
+	 * A callback function that is invoked when a page is closed.
+	 */
+	onPageClose?: (tabId: number, removeInfo: chrome.tabs.TabRemoveInfo) => void
+
+	/**
+	 * A callback function that is invoked when a page is updated.
+	 */
+	onPageUpdate?: Function
+
+	handleTabRemove = (tabId: number, removeInfo: chrome.tabs.TabRemoveInfo) => {
+		const index = this.availablePages.findIndex(({ tabId: id }) => id === tabId)
+		if (index !== -1) {
+			this?.onPageClose?.(tabId, removeInfo)
+			this.availablePages.splice(index, 1)
+		}
+	}
+
+	handleTabUpdate = (tabId: number, changeInfo: chrome.tabs.TabChangeInfo, tab: chrome.tabs.Tab) => {
+		const index = this.availablePages.findIndex(({ tabId: id }) => id === tabId)
+		if (index !== -1) {
+			this?.onPageUpdate?.(this.availablePages[index])
+			if (changeInfo.status === 'complete' && tab.url?.match(/^HTTP/i)) {
+				chrome.scripting.executeScript({
+					target: { tabId },
+					func: selfIntegration
+				}).catch(() => { })
+			}
+		}
+	}
+
+	syncListeners() {
+		if (this.availablePages.length) {
+			if (!chrome.tabs.onUpdated.hasListener(this.handleTabUpdate)) chrome.tabs.onUpdated.addListener(this.handleTabUpdate)
+			if (!chrome.tabs.onRemoved.hasListener(this.handleTabRemove)) chrome.tabs.onRemoved.addListener(this.handleTabRemove)
+		} else {
+			if (chrome.tabs.onUpdated.hasListener(this.handleTabUpdate)) chrome.tabs.onUpdated.removeListener(this.handleTabUpdate)
+			if (chrome.tabs.onRemoved.hasListener(this.handleTabRemove)) chrome.tabs.onRemoved.removeListener(this.handleTabRemove)
+		}
 	}
 }
