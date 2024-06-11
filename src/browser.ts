@@ -1,6 +1,13 @@
 import Page from './page'
 import { selfIntegration } from './self'
 
+const syncPageIntegration = async (tabId: number) => {
+	await chrome.scripting.executeScript({
+		target: { tabId },
+		func: selfIntegration
+	}).catch(() => { })
+}
+
 /**
  * Represents a Browser instance for interacting with Chrome browser pages.
  */
@@ -118,6 +125,7 @@ export default class Browser {
 			this.availablePages.push(page)
 			this?.onPageAdded?.(page)
 			this.syncListeners()
+			syncPageIntegration(tabId as number)
 			return page
 		} catch (glitch) { throw glitch }
 	}
@@ -150,10 +158,7 @@ export default class Browser {
 		if (index !== -1) {
 			this?.onPageUpdate?.(this.availablePages[index])
 			if (changeInfo.status === 'complete' && tab.url?.match(/^HTTP/i)) {
-				chrome.scripting.executeScript({
-					target: { tabId },
-					func: selfIntegration
-				}).catch(() => { })
+				syncPageIntegration(tabId)
 			}
 		}
 	}
