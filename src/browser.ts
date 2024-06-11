@@ -105,6 +105,7 @@ export default class Browser {
 				if (tabOptions) await chrome.tabs.update(tabId as any, tabOptions)
 			}
 			const page = new Page({
+				browser: this,
 				tabId,
 				windowId,
 				...(
