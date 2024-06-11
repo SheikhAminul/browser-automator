@@ -1,20 +1,7 @@
 import RemoteElement from './element'
 import { blobToDataUrl, chooseProperties, cropImageOffscreen, doDelay, imageBitmapFromUrl } from './library'
+import { ActionOptions, PageConfigurations, defaultPageConfigurations } from './others'
 import Self, { selfIntegration } from './self'
-
-declare global {
-	interface Window {
-		Self: typeof Self
-		transmittedFiles: any
-	}
-}
-
-interface PageConfigurations {
-	tryLimit: number
-	delay: number
-	scrollToElementBeforeAction: boolean
-	scrollIntoViewOptions: ScrollIntoViewOptions
-}
 
 /**
  * Represents a Page instance for interacting with Chrome browser pages.
@@ -48,15 +35,7 @@ export default class Page {
 	/**
 	 * @type {Object} - Represents the configurations for the Page instance.
 	 */
-	configurations: PageConfigurations = {
-		tryLimit: 30,
-		delay: 1000,
-		scrollToElementBeforeAction: true,
-		scrollIntoViewOptions: {
-			behavior: 'smooth',
-			block: 'center'
-		}
-	}
+	configurations: PageConfigurations = defaultPageConfigurations
 
 	/**
 	 * Function to be called when the Page instance encounters a glitch.
@@ -520,7 +499,7 @@ export default class Page {
 	async click(selectors: string, index: number = -1): Promise<void> {
 		try {
 			if (!await this.evaluate({
-				func: (selectors: string, index: any, configurations: Pick<PageConfigurations, 'scrollIntoViewOptions' | 'scrollToElementBeforeAction'>) => window.Self.click(selectors, index, configurations),
+				func: (selectors: string, index: any, options: ActionOptions) => window.Self.click(selectors, index, options),
 				args: [selectors, index, this.configurations]
 			})) throw new Error('No element(s) found for the given CSS Selectors or XPath.')
 		} catch (glitch) { throw await this.handleGlitch(`Failed to click on element with the CSS Selectors or XPath '${selectors}'${index === -1 ? '' : `[${index}]`}.\n${glitch}`) }
@@ -550,7 +529,7 @@ export default class Page {
 	async execPasteTo(selectors: string, index: number = -1): Promise<void> {
 		try {
 			if (!await this.evaluate({
-				func: (selectors: string, index: number, configurations: Pick<PageConfigurations, 'scrollIntoViewOptions' | 'scrollToElementBeforeAction'>) => window.Self.execPasteTo(selectors, index, configurations),
+				func: (selectors: string, index: number, options: ActionOptions) => window.Self.execPasteTo(selectors, index, options),
 				args: [selectors, index, this.configurations]
 			})) throw new Error('No element(s) found for the given CSS Selectors or XPath.')
 		} catch (glitch) { throw await this.handleGlitch(`Failed to paste to element with the CSS Selectors or XPath '${selectors}'${index === -1 ? '' : `[${index}]`}.\n${glitch}`) }
@@ -567,7 +546,7 @@ export default class Page {
 	async triggerEvent(selectors: string, type: 'click' | 'input' | 'submit' | 'keydown' | 'keyup' | 'keypress' | 'change' | 'mouseover' | 'mouseout' | 'focus' | 'blur' | 'load' | string, index: number = -1): Promise<void> {
 		try {
 			if (!await this.evaluate({
-				func: (selectors: string, type: any, index: number, { scrollToElementBeforeAction, scrollIntoViewOptions }: Pick<PageConfigurations, 'scrollIntoViewOptions' | 'scrollToElementBeforeAction'>) => {
+				func: (selectors: string, type: any, index: number, { scrollToElementBeforeAction, scrollIntoViewOptions }: ActionOptions) => {
 					const element = window.Self.getElement(selectors, document, index)
 					if (element) {
 						scrollToElementBeforeAction && element.scrollIntoView(scrollIntoViewOptions)
@@ -591,7 +570,7 @@ export default class Page {
 	async input(selectors: string, value: any, index: number = -1): Promise<void> {
 		try {
 			if (!await this.evaluate({
-				func: (selectors: string, value: any, index: number, configurations: Pick<PageConfigurations, 'scrollIntoViewOptions' | 'scrollToElementBeforeAction'>) => window.Self.input(selectors, value, index, configurations),
+				func: (selectors: string, value: any, index: number, options: ActionOptions) => window.Self.input(selectors, value, index, options),
 				args: [selectors, value, index, this.configurations]
 			})) throw new Error('No element(s) found for the given CSS Selectors or XPath.')
 		} catch (glitch) { throw await this.handleGlitch(`Failed to input value '${value}' into element with the CSS Selectors or XPath '${selectors}'${index === -1 ? '' : `[${index}]`}.\n${glitch}`) }
@@ -648,7 +627,7 @@ export default class Page {
 
 			// Upload the file
 			await this.evaluate(
-				async (filesIndex: number, selectors: string, caughtElementIndex: number = -1, { scrollToElementBeforeAction, scrollIntoViewOptions }: Pick<PageConfigurations, 'scrollIntoViewOptions' | 'scrollToElementBeforeAction'>) => {
+				async (filesIndex: number, selectors: string, caughtElementIndex: number = -1, { scrollToElementBeforeAction, scrollIntoViewOptions }: ActionOptions) => {
 					// Upload file
 					const element = selectors ? (selectors.match(/^(\/|\.\/|\()/) ? document.evaluate(selectors, document.documentElement, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue : document.querySelector(selectors)) : window.Self.elementCatcher.current?.elements[caughtElementIndex] as any
 					if (element) {

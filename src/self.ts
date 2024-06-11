@@ -1,15 +1,5 @@
-declare global {
-	interface Window {
-		Self: typeof Self
-	}
-}
-
-interface PageConfigurations {
-	tryLimit: number
-	delay: number
-	scrollToElementBeforeAction: boolean
-	scrollIntoViewOptions: ScrollIntoViewOptions
-}
+import { doDelay } from './library'
+import { ActionOptions, defaultActionOptions, defaultPageConfigurations } from './others'
 
 const selfIntegration = (global = true) => {
 	const triggerEvent = (element: any, type: 'click' | 'input' | 'submit' | 'keydown' | 'keyup' | 'keypress' | 'change' | 'mouseover' | 'mouseout' | 'focus' | 'blur' | 'load' | string) => {
@@ -118,7 +108,7 @@ const selfIntegration = (global = true) => {
 	/**
 	 * Page method's helper functions.
 	 */
-	const click = (selectors: string, index: any, { scrollToElementBeforeAction, scrollIntoViewOptions }: Pick<PageConfigurations, 'scrollIntoViewOptions' | 'scrollToElementBeforeAction'>) => {
+	const click = (selectors: string, index: number = -1, { scrollToElementBeforeAction, scrollIntoViewOptions }: ActionOptions = defaultActionOptions) => {
 		const element = getElement(selectors, document, index) as any
 		if (element) {
 			scrollToElementBeforeAction && element.scrollIntoView(scrollIntoViewOptions)
@@ -127,12 +117,12 @@ const selfIntegration = (global = true) => {
 		} else return false
 	}
 
-	const elementExists = (selectors: string, index: number) => {
+	const elementExists = (selectors: string, index: number = -1) => {
 		const element = getElement(selectors, document, index) as any
 		return element ? true : false
 	}
 
-	const execPasteTo = (selectors: string, index: number, { scrollToElementBeforeAction, scrollIntoViewOptions }: Pick<PageConfigurations, 'scrollIntoViewOptions' | 'scrollToElementBeforeAction'>) => {
+	const execPasteTo = (selectors: string, index: number = -1, { scrollToElementBeforeAction, scrollIntoViewOptions }: ActionOptions = defaultActionOptions) => {
 		const element = getElement(selectors, document, index) as any
 		if (element) {
 			scrollToElementBeforeAction && element.scrollIntoView(scrollIntoViewOptions)
@@ -141,7 +131,7 @@ const selfIntegration = (global = true) => {
 		} else return false
 	}
 
-	const input = (selectors: string, value: any, index: number, { scrollToElementBeforeAction, scrollIntoViewOptions }: Pick<PageConfigurations, 'scrollIntoViewOptions' | 'scrollToElementBeforeAction'>) => {
+	const input = (selectors: string, value: any, index: number = -1, { scrollToElementBeforeAction, scrollIntoViewOptions }: ActionOptions = defaultActionOptions) => {
 		const element = getElement(selectors, document, index) as any
 		if (element) {
 			scrollToElementBeforeAction && element.scrollIntoView(scrollIntoViewOptions)
@@ -208,6 +198,59 @@ const selfIntegration = (global = true) => {
 		}
 	}
 
+	/**
+	 * Functions useable in the executed scripts/functions.
+	 */
+	const goto = (url: string) => location.href = url
+	const reload = () => location.reload()
+	const url = () => location.href
+	const close = () => globalThis.close()
+	const zoom = (zoomFactor: number) => (document.body.style as any).zoom = zoomFactor
+	const waitFor = async (func: Function, args: any[], options: { tryLimit?: number; delay?: number } = {}): Promise<any> => {
+		let value,
+			tryLimit = options.tryLimit || defaultPageConfigurations.tryLimit,
+			delay = options.delay || defaultPageConfigurations.delay
+		while (!(value = await func(...args)) && tryLimit) {
+			tryLimit--
+			await doDelay(delay)
+		}
+		if (value) return value
+		else throw new Error('Waiting timed out...')
+	}
+	const waitForNavigation = async (options: { tryLimit?: number; delay?: number } = {}): Promise<void> => {
+		const lastUrl = url()
+		await waitFor(
+			async (lastUrl: string) => (url() === lastUrl ? false : true),
+			[lastUrl],
+			options
+		)
+	}
+	const waitForElement = async (selectors: string, options: { tryLimit?: number; delay?: number } = {}, index: number = -1): Promise<void> => {
+		await waitFor(
+			Self.isXPath(selectors) ? (
+				(selectors: string, index: number) => getElementByXPath(selectors, document, index) ? true : false
+			) : (
+				(selectors: string, index: number) => getElementBySelectors(selectors, document, index) ? true : false
+			),
+			[selectors, index],
+			options
+		)
+	}
+	const waitForElementMiss = async (selectors: string, options: { tryLimit?: number; delay?: number } = {}, index: number = -1): Promise<void> => {
+		await waitFor(
+			Self.isXPath(selectors) ? (
+				(selectors: string, index: number) => getElementByXPath(selectors, document, index) ? false : true
+			) : (
+				(selectors: string, index: number) => getElementBySelectors(selectors, document, index) ? false : true
+			),
+			[selectors, index],
+			options
+		)
+	}
+
+	/**
+	 * Helper class for RemoteElement.
+	 */
 	class ElementActions {
 		static elements = new Map()
 		static getElement(elementPath: string) {
@@ -244,7 +287,11 @@ const selfIntegration = (global = true) => {
 	const Self = {
 		exists: () => true,
 		ElementActions,
+
 		getElement, getElements, getElementBySelectors, getElementsBySelectors, getElementByXPath, getElementsByXPath, triggerEvent, triggerPaste, setValue, isXPath, filesToFileList, getBlob, dataUrlToFile, blobToFile,
+
+		goto, reload, url, close, zoom, waitFor, waitForNavigation, waitForElement, waitForElementMiss,
+
 		click, elementExists, execPasteTo, input, elementCatcher, manualClick
 	}
 	if (global && !window.Self?.exists?.()) window.Self = Self

@@ -9,6 +9,13 @@ import { doDelay } from './library'
 import Page from './page'
 import Self from './self'
 
+declare global {
+	interface Window {
+		Self: typeof Self
+		transmittedFiles: any
+	}
+}
+
 /**
  * A namespace that provides functions for launching the browser automation process.
  *
