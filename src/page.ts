@@ -401,9 +401,27 @@ export default class Page {
 	}
 
 	/**
+	 * Waits for an element matching the given CSS Selectors or XPath expression to become available and returns the RemoteElement.
+	 * 
+	 * @param {string} selectors - The CSS Selectors or XPath expression of the element to wait for.
+	 * @param {Object} [options] - Optional options for waiting.
+	 * @param {number} [options.tryLimit] - The maximum number of attempts (default is 1000).
+	 * @param {number} [options.delay] - The delay in milliseconds between attempts (default is 750ms).
+	 * @param {number} [index = -1] - The index of the element if there are multiple matches.
+	 * @returns {Promise<RemoteElement>}
+	 */
+	async waitForElement(selectors: string, options: { tryLimit?: number; delay?: number } = {}, index: number = -1): Promise<RemoteElement | undefined> {
+		try {
+			if (await (Self.isXPath(selectors) ? this.waitForXPath : this.waitForSelector)(selectors, options, index).then(() => true).catch(() => false)) {
+				return await this.getElement(selectors, index)
+			} else throw new Error('Element not found.')
+		} catch (glitch) { throw await this.handleGlitch(`Glitch while waiting for the element with the CSS Selectors/XPath '${selectors}'${index === -1 ? '' : `[${index}]`}.\n${glitch}`) }
+	}
+
+	/**
 	 * Waits for an element matching the given XPath expression or CSS Selectors to disappear from the page.
 	 * 
-	 * @param {string} selectors - The CSS XPath expression to check for element absence.
+	 * @param {string} selectors - The CSS Selectors or XPath expression to check for element absence.
 	 * @param {Object} [options] - Optional options for waiting.
 	 * @param {number} [options.tryLimit] - The maximum number of attempts (default is 1000).
 	 * @param {number} [options.delay] - The delay in milliseconds between attempts (default is 750ms).
@@ -447,7 +465,7 @@ export default class Page {
 	 * @param {number} index - The index of the element to check.
 	 * @returns {Promise<RemoteElement>}
 	 */
-	async getElement(selectors: string, index: number = -1, context?: string) {
+	async getElement(selectors: string, index: number = -1, context?: string): Promise<RemoteElement | undefined> {
 		const elementPath = `${context ? `${context}→${selectors}` : selectors}⟮${index}⟯`
 		const { tagName } = await this.evaluate({
 			func: (elementPath) => {
