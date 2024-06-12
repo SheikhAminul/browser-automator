@@ -410,12 +410,10 @@ export default class Page {
 	 * @param {number} [index = -1] - The index of the element if there are multiple matches.
 	 * @returns {Promise<RemoteElement>}
 	 */
-	async waitForElement(selectors: string, options: { tryLimit?: number; delay?: number } = {}, index: number = -1): Promise<RemoteElement | undefined> {
-		try {
-			if (await (Self.isXPath(selectors) ? this.waitForXPath : this.waitForSelector)(selectors, options, index).then(() => true).catch(() => false)) {
-				return await this.getElement(selectors, index)
-			} else throw new Error('Element not found.')
-		} catch (glitch) { throw await this.handleGlitch(`Glitch while waiting for the element with the CSS Selectors/XPath '${selectors}'${index === -1 ? '' : `[${index}]`}.\n${glitch}`) }
+	async waitForElement(selectors: string, options: { tryLimit?: number; delay?: number } = {}, index: number = -1) {
+		if (await (Self.isXPath(selectors) ? this.waitForXPath : this.waitForSelector)(selectors, options, index).then(() => true).catch(() => false)) {
+			return await this.getElement(selectors, index)
+		}
 	}
 
 	/**
@@ -426,25 +424,23 @@ export default class Page {
 	 * @param {number} [options.tryLimit] - The maximum number of attempts (default is 1000).
 	 * @param {number} [options.delay] - The delay in milliseconds between attempts (default is 750ms).
 	 * @param {number} [index = -1] - The index of the element if there are multiple matches.
-	 * @returns {Promise<void>}
+	 * @returns {Promise<boolean>}
 	 */
-	async waitForElementMiss(selectors: string, options: { tryLimit?: number; delay?: number } = {}, index: number = -1): Promise<void> {
-		try {
-			await this.waitFor(
-				async (options: any) => this.evaluate(options),
-				[
-					{
-						func: Self.isXPath(selectors) ? (
-							(selectors: string, index: number) => window.Self.getElementByXPath(selectors, document, index) ? false : true
-						) : (
-							(selectors: string, index: number) => window.Self.getElementBySelectors(selectors, document, index) ? false : true
-						),
-						args: [selectors, index]
-					}
-				],
-				options
-			)
-		} catch (glitch) { throw await this.handleGlitch(`Glitch while waiting for the XPath '${selectors}'${index === -1 ? '' : `[${index}]`} to be missing.\n${glitch}`) }
+	async waitForElementMiss(selectors: string, options: { tryLimit?: number; delay?: number } = {}, index: number = -1): Promise<boolean> {
+		return await this.waitFor(
+			async (options: any) => this.evaluate(options),
+			[
+				{
+					func: Self.isXPath(selectors) ? (
+						(selectors: string, index: number) => window.Self.getElementByXPath(selectors, document, index) ? false : true
+					) : (
+						(selectors: string, index: number) => window.Self.getElementBySelectors(selectors, document, index) ? false : true
+					),
+					args: [selectors, index]
+				}
+			],
+			options
+		).then(() => true).catch(() => false)
 	}
 
 	/**
@@ -465,7 +461,7 @@ export default class Page {
 	 * @param {number} index - The index of the element to check.
 	 * @returns {Promise<RemoteElement>}
 	 */
-	async getElement(selectors: string, index: number = -1, context?: string): Promise<RemoteElement | undefined> {
+	async getElement(selectors: string, index: number = -1, context?: string) {
 		const elementPath = `${context ? `${context}→${selectors}` : selectors}⟮${index}⟯`
 		const { tagName } = await this.evaluate({
 			func: (elementPath) => {
