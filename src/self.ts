@@ -244,7 +244,7 @@ const selfIntegration = (global = true) => {
 	}
 	const waitForElement = async (selectors: string, options: { tryLimit?: number; delay?: number } = {}, index: number = -1): Promise<void> => {
 		await waitFor(
-			Self.isXPath(selectors) ? (
+			isXPath(selectors) ? (
 				(selectors: string, index: number) => getElementByXPath(selectors, document, index) ? true : false
 			) : (
 				(selectors: string, index: number) => getElementBySelectors(selectors, document, index) ? true : false
@@ -255,7 +255,7 @@ const selfIntegration = (global = true) => {
 	}
 	const waitForElementMiss = async (selectors: string, options: { tryLimit?: number; delay?: number } = {}, index: number = -1): Promise<void> => {
 		await waitFor(
-			Self.isXPath(selectors) ? (
+			isXPath(selectors) ? (
 				(selectors: string, index: number) => getElementByXPath(selectors, document, index) ? false : true
 			) : (
 				(selectors: string, index: number) => getElementBySelectors(selectors, document, index) ? false : true
