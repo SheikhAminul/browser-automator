@@ -1,7 +1,24 @@
-import { doDelay } from './library'
-import { ActionOptions, defaultActionOptions, defaultPageConfigurations } from './others'
+import { ActionOptions, PageConfigurations } from './others'
 
 const selfIntegration = (global = true) => {
+	const defaultActionOptions: ActionOptions = {
+		scrollToElementBeforeAction: true,
+		scrollIntoViewOptions: {
+			behavior: 'smooth',
+			block: 'center'
+		}
+	}
+
+	const defaultPageConfigurations: PageConfigurations = {
+		tryLimit: 30,
+		delay: 1000,
+		...defaultActionOptions
+	}
+
+	const doDelay = async (milliseconds: number): Promise<void> => {
+		return new Promise(onDone => setTimeout(onDone, milliseconds))
+	}
+
 	const triggerEvent = (element: any, type: 'click' | 'input' | 'submit' | 'keydown' | 'keyup' | 'keypress' | 'change' | 'mouseover' | 'mouseout' | 'focus' | 'blur' | 'load' | string) => {
 		element.dispatchEvent(
 			new Event(type, {
