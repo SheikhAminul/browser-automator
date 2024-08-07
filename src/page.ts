@@ -102,6 +102,8 @@ export default class Page {
 	async goto(url: string, { waitUntil }: { waitUntil: 'load' | 'domcontentloaded' } = { waitUntil: 'domcontentloaded' }): Promise<void> {
 		try {
 			await chrome.tabs.update(this.tabId, { url: 'about:blank' })
+			if (url === 'about:blank') return
+
 			await chrome.tabs.update(this.tabId, { url: url })
 
 			let tab
