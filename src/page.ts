@@ -493,7 +493,7 @@ export default class Page {
 					}))
 				}
 			},
-			args: [selectors, context]
+			args: [selectors, context || '']
 		})
 		return elements?.map(({ tagName, elementPath }) => new RemoteElement(this, elementPath, tagName))
 	}

@@ -1,11 +1,12 @@
 {
 	"name": "browser-automator",
-	"version": "3.5.49",
+	"version": "3.5.50",
 	"description": "Puppeteer alternative for Chrome extensions. A module for Chrome extensions that functions similarly to Puppeteer.",
 	"main": "lib/index.js",
 	"types": "lib/index.d.ts",
 	"scripts": {
 		"build": "tsc",
+		"watch:build": "(set /p dirPath=\"Enter Dir Path:\" || set dirPath=./lib) && call webpack --watch --output-path \"%dirPath%\"",
 		"dist": "webpack --no-devtool"
 	},
 	"repository": {
