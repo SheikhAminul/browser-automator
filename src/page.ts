@@ -99,15 +99,18 @@ export default class Page {
 	 * @param {string} [options.waitUntil='domcontentloaded'] - When to consider navigation as complete ('load' or 'domcontentloaded').
 	 * @returns {Promise<void>} - Resolves when the navigation is complete.
 	 */
-	async goto(url: string, { waitUntil }: { waitUntil: 'load' | 'domcontentloaded' } = { waitUntil: 'domcontentloaded' }): Promise<void> {
+	async goto(url: string, { waitUntil }: { waitUntil?: 'load' | 'domcontentloaded' | 'bodyloaded' } = { waitUntil: 'bodyloaded' }): Promise<void> {
 		try {
 			await chrome.tabs.update(this.tabId, { url: 'about:blank' })
-			if (url === 'about:blank') return
+			while (await this.url() !== 'about:blank') await doDelay(this.configurations.delay)
+			if (url === 'about:blank') return void 0
 
 			await chrome.tabs.update(this.tabId, { url: url })
 
 			let tab
-			if (waitUntil === 'load') {
+			if (waitUntil === 'bodyloaded') {
+				await this.waitFor(async () => await this.evaluate(() => document?.body ? true : false).catch(() => false), [])
+			} else if (waitUntil === 'load') {
 				do {
 					await doDelay(this.configurations.delay)
 					tab = await chrome.tabs.get(this.tabId)
