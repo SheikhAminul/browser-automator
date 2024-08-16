@@ -274,7 +274,7 @@ const selfIntegration = (global = true) => {
 			let element = this.elements.get(elementPath)
 			if (element) return element
 			for (const path of elementPath.split('→')) {
-				let [, selectors, index] = path.match(/(.+)⟮([0-9-]+)⟯$/) as any
+				let [, selectors, index] = path.match(/([\s\S]*?)⟮([0-9-]+)⟯$/) as any
 				index = Number(index)
 				element = getElement(selectors, element || document, index)
 			}
