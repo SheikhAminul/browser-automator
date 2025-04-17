@@ -1,7 +1,7 @@
 import Page from './page'
 import { selfIntegration } from './self'
 
-const syncPageIntegration = async (tabId: number) => {
+export const syncPageIntegration = async (tabId: number) => {
 	await chrome.scripting.executeScript({
 		target: { tabId },
 		func: selfIntegration

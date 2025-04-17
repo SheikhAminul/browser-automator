@@ -1,4 +1,4 @@
-import Browser from './browser'
+import Browser, { syncPageIntegration } from './browser'
 import RemoteElement from './element'
 import { blobToDataUrl, chooseProperties, cropImageOffscreen, doDelay, imageBitmapFromUrl } from './library'
 import { ActionOptions, PageConfigurations, defaultPageConfigurations } from './others'
@@ -121,6 +121,8 @@ export default class Page {
 					tab = await chrome.tabs.get(this.tabId)
 				} while (tab.pendingUrl === 'about:blank' || tab.url === 'about:blank' || tab.status !== 'complete')
 			}
+
+			await syncPageIntegration(this.tabId)
 		} catch (glitch) { throw await this.handleGlitch(`Failed to navigate to URL '${url}'.\n${glitch}`) }
 	}
 
